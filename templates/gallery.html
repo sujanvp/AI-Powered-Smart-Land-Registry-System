@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block title %}Land Marketplace - AI Smart Land Registry System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="header-left">
+        <h1>Land Marketplace & Request</h1>
+
+    </div>
+</div>
+
+<div class="section-card">
+    <div class="card-header-row" style="border-bottom: 1px solid #e2e8f0; padding-bottom: 1rem; margin-bottom: 1.5rem;">
+        <h3><i class="fa-solid fa-store"></i> Available Properties</h3>
+    </div>
+    
+    <div class="table-container">
+        <table class="gov-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Area (sq ft)</th>
+                    <th>City</th>
+                    <th>State</th>
+                    <th>Declared Price</th>
+                    <th>Property PID</th>
+                    <th>Survey Number</th>
+                    <th>AI Valuation Est.</th>
+                    <th>AI Security Risk</th>
+                    <th>Request Purchase</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if lands %}
+                    {% for land in lands %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>{{ land.info.area | int }}</td>
+                            <td>{{ land.info.city or land.info.location.split(',')[0] }}</td>
+                            <td>{{ land.info.state or (land.info.location.split(',')[1] if ',' in land.info.location else 'Maharashtra') }}</td>
+                            <td class="table-price">{{ land.info.price | currency }}</td>
+                            <td class="mono font-bold">{{ land.info.pid or 'N/A' }}</td>
+                            <td class="mono font-bold">{{ land.info.survey_number }}</td>
+                            <td style="color: #2563eb; font-weight: 700;">
+                                {% if land.info.predictions %}
+                                    {{ land.info.predictions[0].predicted_price | currency }}
+                                {% else %}
+                                    Calculating...
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="status-badge {% if land.risk_level == 'High' %}status-flagged{% elif land.risk_level == 'Medium' %}status-pending{% else %}status-verified{% endif %}" style="font-size: 0.7rem;">
+                                    {{ land.risk_level }} Risk
+                                </span>
+                            </td>
+                            <td>
+                                <form action="{{ url_for('land.request_purchase', land_id=land.info.id) }}" method="POST">
+                                    <button type="submit" class="btn-action-primary" style="padding: 0.4rem 1rem; font-size: 0.8rem; color: #fff;">
+                                        Request Land
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="10" class="table-empty">
+                            <i class="fa-solid fa-images"></i>
+                            <p>No properties available for purchase in the registry.</p>
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

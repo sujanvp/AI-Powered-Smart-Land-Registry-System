@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+
+{% block title %}Land Records & Ownership - Transfer History - Smart Land Registry{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <div class="dashboard-title">
+        <h1>Land Records & Ownership — Transfer History</h1>
+    </div>
+</div>
+
+<div class="glass-card">
+    <h2 class="panel-title"><i class="fa-solid fa-file-invoice"></i> Official Land Transfer Audit Logs</h2>
+    
+    <div class="table-wrapper" style="overflow-x: auto; width: 100%; border-radius: 8px; border: 1px solid #e2e8f0; margin-top: 1rem;">
+        <table class="custom-table" style="width: 100%; min-width: 1100px; border-collapse: collapse;">
+            <thead>
+                <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+                    <th style="text-align: center; padding: 0.85rem 1rem; width: 120px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase;">Transfer Ref</th>
+                    <th style="text-align: left; padding: 0.85rem 1rem; width: 150px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase;">Survey Number</th>
+                    <th style="text-align: center; padding: 0.85rem 1rem; width: 150px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase;">Property PID</th>
+                    <th style="text-align: left; padding: 0.85rem 1rem; width: 180px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase;">Seller (Previous Owner)</th>
+                    <th style="text-align: left; padding: 0.85rem 1rem; width: 180px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase;">Buyer (New Owner)</th>
+                    <th style="text-align: right; padding: 0.85rem 1rem; width: 150px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase;">Declared Price</th>
+                    <th style="text-align: center; padding: 0.85rem 1rem; width: 170px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase;">Completion Timestamp</th>
+                    <th style="text-align: center; padding: 0.85rem 1rem; width: 160px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase;">Registry Audit</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if transfers %}
+                    {% for t in transfers %}
+                        <tr style="border-bottom: 1px solid #f1f5f9; transition: background 0.15s ease;" onmouseover="this.style.background='#f8fafc';" onmouseout="this.style.background='transparent';">
+                            <!-- Transfer Ref (Center) -->
+                            <td class="mono" style="text-align: center; padding: 0.85rem 1rem; font-weight: 700; color: #2563eb; font-size: 0.82rem; word-break: break-word;">
+                                {{ t.transfer_ref or ('TR-' ~ "%04d"|format(t.id)) }}
+                            </td>
+
+                            <!-- Survey Number (Left, Monospace, Word Break) -->
+                            <td class="mono" style="text-align: left; padding: 0.85rem 1rem; font-size: 0.85rem; word-break: break-word;">
+                                {% set s_num = (t.land.survey_number[1:] if t.land.survey_number.startswith('#') else t.land.survey_number) if t.land else ('SY-BLR-' ~ "%06d"|format(t.land_id)) %}
+                                <a href="#" onclick="openTransferDetailsModal({{ t.id }}); return false;" style="color: #1e3a8a; font-weight: 700; text-decoration: underline;" title="Click to view Transfer Details">
+                                    {{ s_num }}
+                                </a>
+                                {% set city_text = (t.land.city ~ (', ' ~ t.land.state if t.land.state else '')) if (t.land and t.land.city) else (t.land.location if t.land else 'Bengaluru, Karnataka') %}
+                                <div style="font-size: 0.72rem; color: #64748b; font-weight: 400;">{{ city_text }}</div>
+                            </td>
+
+                            <!-- Property PID (Center, Monospace, Word Break) -->
+                            <td class="mono" style="text-align: center; padding: 0.85rem 1rem; font-size: 0.82rem; color: #475569; word-break: break-word;">
+                                {{ (t.land.pid or ('PID-KA-BLR-2026-' ~ "%06d"|format(t.land.id))) if t.land else ('PID-KA-BLR-2026-' ~ "%06d"|format(t.land_id)) }}
+                            </td>
+
+                            <!-- Seller (Left) -->
+                            <td style="text-align: left; padding: 0.85rem 1rem; font-size: 0.85rem;">
+                                {% set prev_name = t.previous_owner.username if t.previous_owner else (t.land.owner.username if (t.land and t.land.owner) else 'Revenue Land Board') %}
+                                {% set prev_cid = t.previous_owner.citizen_id if (t.previous_owner and t.previous_owner.citizen_id) else '' %}
+                                <strong style="color: #475569;">{{ prev_name }}</strong>
+                                {% if prev_cid %}<div style="font-size: 0.72rem; color: #64748b;" class="mono">{{ prev_cid }}</div>{% endif %}
+                            </td>
+
+                            <!-- Buyer (Left) -->
+                            <td style="text-align: left; padding: 0.85rem 1rem; font-size: 0.85rem;">
+                                {% set new_name = t.new_owner.username if t.new_owner else 'Registered Buyer' %}
+                                {% set new_cid = t.new_owner.citizen_id if (t.new_owner and t.new_owner.citizen_id) else '' %}
+                                <strong style="color: #059669;">{{ new_name }}</strong>
+                                {% if new_cid %}<div style="font-size: 0.72rem; color: #059669;" class="mono">{{ new_cid }}</div>{% endif %}
+                            </td>
+
+                            <!-- Declared Price (Right, Currency) -->
+                            <td class="mono" style="text-align: right; padding: 0.85rem 1rem; font-weight: 700; color: #059669; font-size: 0.88rem;">
+                                {{ (t.transfer_price or (t.land.price if t.land else 125000.0)) | currency }}
+                            </td>
+
+                            <!-- Completion Timestamp (Center) -->
+                            <td style="text-align: center; padding: 0.85rem 1rem; font-size: 0.78rem; color: #475569; white-space: nowrap;">
+                                {{ t.transfer_date.strftime('%d %b %Y, %I:%M %p') if t.transfer_date else (t.land.created_at.strftime('%d %b %Y, %I:%M %p') if (t.land and t.land.created_at) else '29 Jul 2026, 05:44 PM') }}
+                            </td>
+
+                            <!-- Registry Audit & Certificate (Center) -->
+                            <td style="text-align: center; padding: 0.85rem 1rem; white-space: nowrap;">
+                                <div style="display: flex; flex-direction: column; gap: 0.35rem; align-items: center;">
+                                    <span class="status-badge status-verified" style="font-size: 0.72rem; padding: 0.2rem 0.55rem;"><i class="fa-solid fa-check-double"></i> {{ (t.status or 'APPROVED') | upper }}</span>
+                                    {% if t.status == 'approved' or not t.status %}
+                                        <div style="display: flex; gap: 0.3rem; margin-top: 0.15rem;">
+                                            <a href="{{ url_for('land.view_transfer_certificate', transfer_id=t.id) }}" target="_blank" class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.7rem; text-decoration: none; color: #2563eb; background: #eff6ff; border: 1px solid #bfdbfe;" title="View Transfer Certificate">
+                                                <i class="fa-solid fa-certificate"></i> View
+                                            </a>
+                                            <a href="{{ url_for('land.download_transfer_certificate', transfer_id=t.id) }}" class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.7rem; text-decoration: none; color: #059669; background: #ecfdf5; border: 1px solid #a7f3d0;" title="Download PDF Certificate">
+                                                <i class="fa-solid fa-file-pdf"></i> PDF
+                                            </a>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="8" style="text-align: center; color: var(--text-secondary); padding: 3rem 0;">
+                            <i class="fa-solid fa-file-signature" style="font-size: 3rem; color: var(--text-dim); margin-bottom: 1rem; display: block;"></i>
+                            No completed land transfers recorded yet.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+    {% include 'components/pagination.html' %}
+</div>
+{% endblock %}
+
+

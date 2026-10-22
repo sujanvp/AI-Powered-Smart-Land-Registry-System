@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en" class="{% if request.path == '/' or request.endpoint == 'land.index' %}home-page-mode{% endif %}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Smart Land Registry System{% endblock %}</title>
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- FontAwesome Icon Set -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap">
+    <style>
+        .unread-notif { background: rgba(37, 99, 235, 0.05); }
+    </style>
+</head>
+<body class="light-theme {% if request.path == '/' or request.endpoint == 'land.index' %}home-page-mode{% endif %}">
+    <div class="app-layout">
+        <!-- Collapsible Left Sidebar -->
+        <aside class="app-sidebar">
+            <a href="{{ url_for('index') }}" class="sidebar-brand" style="text-decoration: none; cursor: pointer;" title="Go to Smart Land Registry Home Page">
+                <i class="fa-solid fa-landmark-flag branding-icon"></i>
+                <div class="brand-text">
+                    <span class="main-title">E-Registry</span>
+                </div>
+            </a>
+            
+            <nav class="sidebar-nav">
+                {% if current_user.is_authenticated %}
+                    <ul class="nav-list">
+                        
+                        <!-- User Management Module -->
+                        <li class="nav-item-group {% if request.endpoint in ['land.dashboard', 'land.profile'] %}open{% endif %}">
+                            <div class="group-header" onclick="toggleSidebarGroup(this)">
+                                <span class="group-header-text"><i class="fa-solid fa-user-gear"></i> <span>User Management</span></span>
+                                <i class="fa-solid fa-chevron-down group-caret"></i>
+                            </div>
+                            <ul class="sub-list">
+                                <li class="sub-item {% if request.endpoint == 'land.dashboard' %}active{% endif %}">
+                                    <a href="{{ url_for('land.dashboard') }}"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+                                </li>
+                                <li class="sub-item {% if request.endpoint == 'land.profile' %}active{% endif %}">
+                                    <a href="{{ url_for('land.profile') }}"><i class="fa-solid fa-id-card"></i> User Profile</a>
+                                </li>
+                            </ul>
+                        </li>
+
+                        <!-- Land Registration Module -->
+                        {% if current_user.role in ['citizen', 'admin'] %}
+                        <li class="nav-item-group {% if request.endpoint in ['land.register_land', 'land.owned_lands'] %}open{% endif %}">
+                            <div class="group-header" onclick="toggleSidebarGroup(this)">
+                                <span class="group-header-text"><i class="fa-solid fa-map-location-dot"></i> <span>Land Registration</span></span>
+                                <i class="fa-solid fa-chevron-down group-caret"></i>
+                            </div>
+                            <ul class="sub-list">
+                                <li class="sub-item {% if request.endpoint == 'land.register_land' %}active{% endif %}">
+                                    <a href="{{ url_for('land.register_land') }}"><i class="fa-solid fa-circle-plus"></i> Register New Land</a>
+                                </li>
+                                <li class="sub-item {% if request.endpoint == 'land.owned_lands' %}active{% endif %}">
+                                    <a href="{{ url_for('land.owned_lands') }}"><i class="fa-solid fa-house-chimney"></i> My Owned Properties</a>
+                                </li>
+                            </ul>
+                        </li>
+                        {% endif %}
+
+                        <!-- Document Verification (OCR) Module -->
+                        <li class="nav-item-group {% if request.endpoint == 'land.verification' %}open{% endif %}">
+                            <div class="group-header" onclick="toggleSidebarGroup(this)">
+                                <span class="group-header-text"><i class="fa-solid fa-file-signature"></i> <span>Document Verification (OCR)</span></span>
+                                <i class="fa-solid fa-chevron-down group-caret"></i>
+                            </div>
+                            <ul class="sub-list">
+                                <li class="sub-item {% if request.endpoint == 'land.verification' %}active{% endif %}">
+                                    <a href="{{ url_for('land.verification') }}"><i class="fa-solid fa-file-shield"></i> OCR Title Verification</a>
+                                </li>
+                            </ul>
+                        </li>
+
+                        <!-- AI Fraud Detection Module -->
+                        {% if current_user.role in ['registrar', 'admin'] %}
+                        <li class="nav-item-group {% if request.endpoint == 'land.fraud_detection' %}open{% endif %}">
+                            <div class="group-header" onclick="toggleSidebarGroup(this)">
+                                <span class="group-header-text"><i class="fa-solid fa-shield-halved"></i> <span>AI Fraud Detection</span></span>
+                                <i class="fa-solid fa-chevron-down group-caret"></i>
+                            </div>
+                            <ul class="sub-list">
+                                <li class="sub-item {% if request.endpoint == 'land.fraud_detection' %}active{% endif %}">
+                                    <a href="{{ url_for('land.fraud_detection') }}"><i class="fa-solid fa-triangle-exclamation"></i> Fraud Risk Alerts</a>
+                                </li>
+                            </ul>
+                        </li>
+                        {% endif %}
+
+                        <!-- Land Request & Approval Module -->
+                        <li class="nav-item-group {% if request.endpoint in ['land.land_registration_approvals', 'land.transfer_requests', 'land.pending_transfer_approvals', 'land.pending_approvals', 'land.edit_transfer_request'] %}open{% endif %}">
+                            <div class="group-header" onclick="toggleSidebarGroup(this)">
+                                <span class="group-header-text"><i class="fa-solid fa-handshake"></i> <span>Land Request & Approval</span></span>
+                                <i class="fa-solid fa-chevron-down group-caret"></i>
+                            </div>
+                            <ul class="sub-list">
+                                {% if current_user.role in ['registrar', 'admin'] %}
+                                    <li class="sub-item {% if request.endpoint == 'land.land_registration_approvals' %}active{% endif %}">
+                                        <a href="{{ url_for('land.land_registration_approvals') }}"><i class="fa-solid fa-house-circle-check"></i> Land Registration Approvals</a>
+                                    </li>
+                                    <li class="sub-item {% if request.endpoint in ['land.transfer_requests', 'land.edit_transfer_request'] %}active{% endif %}">
+                                        <a href="{{ url_for('land.transfer_requests') }}"><i class="fa-solid fa-right-left"></i> Land Transfer Requests</a>
+                                    </li>
+                                    <li class="sub-item {% if request.endpoint == 'land.pending_transfer_approvals' %}active{% endif %}">
+                                        <a href="{{ url_for('land.pending_transfer_approvals') }}"><i class="fa-solid fa-clock-rotate-left"></i> Pending Transfer Approvals</a>
+                                    </li>
+                                {% else %}
+                                    <li class="sub-item {% if request.endpoint in ['land.transfer_requests', 'land.edit_transfer_request'] %}active{% endif %}">
+                                        <a href="{{ url_for('land.transfer_requests') }}"><i class="fa-solid fa-right-left"></i> Land Transfer Requests</a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </li>
+
+                        <!-- Property Price Prediction Module -->
+                        <li class="nav-item-group {% if request.endpoint == 'prediction.query_valuation' %}open{% endif %}">
+                            <div class="group-header" onclick="toggleSidebarGroup(this)">
+                                <span class="group-header-text"><i class="fa-solid fa-map-location-dot"></i> <span>Property Price Prediction</span></span>
+                                <i class="fa-solid fa-chevron-down group-caret"></i>
+                            </div>
+                            <ul class="sub-list">
+                                <li class="sub-item {% if request.endpoint == 'prediction.query_valuation' %}active{% endif %}">
+                                    <a href="{{ url_for('prediction.query_valuation') }}"><i class="fa-solid fa-map-pin"></i> Map-Based Price Predictor</a>
+                                </li>
+                            </ul>
+                        </li>
+
+
+                        <!-- Land Records & Ownership Module -->
+                        <li class="nav-item-group {% if request.endpoint in ['land.records', 'land.owned_lands', 'land.ownership_history', 'land.transfer_history'] %}open{% endif %}">
+                            <div class="group-header" onclick="toggleSidebarGroup(this)">
+                                <span class="group-header-text"><i class="fa-solid fa-database"></i> <span>Land Records & Ownership</span></span>
+                                <i class="fa-solid fa-chevron-down group-caret"></i>
+                            </div>
+                            <ul class="sub-list">
+                                {% if current_user.role == 'citizen' %}
+                                    <li class="sub-item {% if request.endpoint == 'land.records' %}active{% endif %}">
+                                        <a href="{{ url_for('land.records') }}"><i class="fa-solid fa-magnifying-glass-location"></i> My Land Records</a>
+                                    </li>
+                                    <li class="sub-item {% if request.endpoint == 'land.ownership_history' %}active{% endif %}">
+                                        <a href="{{ url_for('land.ownership_history') }}"><i class="fa-solid fa-timeline"></i> My Ownership History</a>
+                                    </li>
+                                    <li class="sub-item {% if request.endpoint == 'land.transfer_history' %}active{% endif %}">
+                                        <a href="{{ url_for('land.transfer_history') }}"><i class="fa-solid fa-file-invoice"></i> My Transfer History</a>
+                                    </li>
+                                {% else %}
+                                    <li class="sub-item {% if request.endpoint == 'land.records' %}active{% endif %}">
+                                        <a href="{{ url_for('land.records') }}"><i class="fa-solid fa-database"></i> All Ownership Records</a>
+                                    </li>
+                                    <li class="sub-item {% if request.endpoint == 'land.ownership_history' %}active{% endif %}">
+                                        <a href="{{ url_for('land.ownership_history') }}"><i class="fa-solid fa-timeline"></i> Complete Ownership History</a>
+                                    </li>
+                                    <li class="sub-item {% if request.endpoint == 'land.transfer_history' %}active{% endif %}">
+                                        <a href="{{ url_for('land.transfer_history') }}"><i class="fa-solid fa-file-invoice"></i> Complete Transfer History</a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </li>
+
+                        <!-- Admin Dashboard & Reports Module -->
+                        {% if current_user.role == 'admin' %}
+                        <div class="nav-section-title">ADMINISTRATION</div>
+                        <li class="nav-item-group {% if request.endpoint in ['admin.dashboard', 'admin.reports', 'admin.analytics', 'admin.officer_approvals'] %}open{% endif %}">
+                            <div class="group-header" onclick="toggleSidebarGroup(this)">
+                                <span class="group-header-text"><i class="fa-solid fa-folder-open"></i> <span>Admin Dashboard & Reports</span></span>
+                                <i class="fa-solid fa-chevron-down group-caret"></i>
+                            </div>
+                            <ul class="sub-list">
+                                <li class="sub-item {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
+                                    <a href="{{ url_for('admin.dashboard') }}"><i class="fa-solid fa-user-shield"></i> Officer Dashboard</a>
+                                </li>
+                                <li class="sub-item {% if request.endpoint == 'admin.reports' %}active{% endif %}">
+                                    <a href="{{ url_for('admin.reports') }}"><i class="fa-solid fa-chart-pie"></i> Audit Reports</a>
+                                </li>
+                                <li class="sub-item {% if request.endpoint == 'admin.analytics' %}active{% endif %}">
+                                    <a href="{{ url_for('admin.analytics') }}"><i class="fa-solid fa-chart-line"></i> Registry Analytics</a>
+                                </li>
+                                <li class="sub-item {% if request.endpoint == 'admin.officer_approvals' %}active{% endif %}">
+                                    <a href="{{ url_for('admin.officer_approvals') }}"><i class="fa-solid fa-id-card-clip"></i> Officer Registration Approval</a>
+                                </li>
+                            </ul>
+                        </li>
+                        {% endif %}
+
+
+                    </ul>
+                {% endif %}
+            </nav>
+        </aside>
+        
+        <!-- Main Panel -->
+        <div class="main-panel">
+            <!-- Top Navigation Bar -->
+            <header class="app-top-nav">
+                <div class="nav-left">
+                    <button class="menu-toggle-btn" id="sidebarToggle"><i class="fa-solid fa-bars"></i></button>
+                    <a href="{{ url_for('index') }}" class="gov-identity-link" style="text-decoration: none; color: inherit; cursor: pointer;" title="Go to Smart Land Registry Home Page">
+                        <div class="gov-identity">
+                            <span class="gov-title">SMART LAND REGISTRY SYSTEM</span>
+                            {% if current_user.is_authenticated %}<span class="portal-tag"><span style="font-weight: 800; color: #f59e0b; background: rgba(245, 158, 11, 0.1); padding: 0.15rem 0.5rem; border-radius: 4px; border: 1px solid rgba(245, 158, 11, 0.2);">{{ current_user.role | upper }} VIEW</span></span>{% endif %}
+                        </div>
+                    </a>
+                </div>
+                
+                <div class="nav-center">
+                    {% if current_user.is_authenticated %}
+                        <form action="{{ url_for('land.records') }}" method="GET" class="topbar-search-form">
+                            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                            <input type="text" name="q" value="{{ search_query or '' }}" class="topbar-search-input">
+                        </form>
+                    {% endif %}
+                </div>
+                
+                <div class="nav-right">
+                    <!-- Notifications -->
+                    <div class="topbar-item dropdown">
+                        <div class="notification-trigger" id="notifBtn">
+                            <i class="fa-solid fa-bell bell-icon"></i>
+                            {% if unread_notification_count and unread_notification_count > 0 %}
+                                <span class="badge-count">{{ unread_notification_count }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="dropdown-menu notif-dropdown" id="notifDropdown" style="min-width: 320px; max-width: 380px;">
+                            <div class="dropdown-header" style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; border-bottom: 1px solid #e2e8f0; font-weight: 700; color: #1e293b;">
+                                <span><i class="fa-solid fa-bell text-primary"></i> Notifications</span>
+                                {% if unread_notification_count and unread_notification_count > 0 %}
+                                    <button type="button" onclick="markAllNotificationsRead()" style="background: none; border: none; color: #2563eb; font-size: 0.75rem; font-weight: 600; cursor: pointer;">Mark all as read</button>
+                                {% endif %}
+                            </div>
+                            <div class="notif-list-container" style="max-height: 350px; overflow-y: auto;">
+                                {% if user_notifications %}
+                                    {% for notif in user_notifications %}
+                                        <div class="dropdown-item notif-item {% if not notif.is_read %}unread-notif{% endif %}" 
+                                             style="padding: 0.75rem 1rem; border-bottom: 1px solid #f1f5f9; display: flex; gap: 0.75rem; align-items: flex-start; cursor: pointer;"
+                                             data-notif-id="{{ notif.id }}" data-req-id="{{ notif.related_request_id or 'null' }}" data-land-id="{{ notif.related_land_id or 'null' }}" data-type="{{ notif.notification_type }}"
+                                             onclick="handleNotificationClick(this.getAttribute('data-notif-id')==='null'?null:this.getAttribute('data-notif-id'), this.getAttribute('data-req-id')==='null'?null:this.getAttribute('data-req-id'), this.getAttribute('data-land-id')==='null'?null:this.getAttribute('data-land-id'), this.getAttribute('data-type'))">
+                                            <div style="margin-top: 0.15rem;">
+                                                {% if notif.notification_type == 'rejection' %}
+                                                    <i class="fa-solid fa-circle-xmark" style="font-size: 1.1rem; color: #ef4444;"></i>
+                                                {% elif notif.notification_type == 'approval' %}
+                                                    <i class="fa-solid fa-circle-check" style="font-size: 1.1rem; color: #10b981;"></i>
+                                                {% else %}
+                                                    <i class="fa-solid fa-bell" style="font-size: 1.1rem; color: #2563eb;"></i>
+                                                {% endif %}
+                                            </div>
+                                            <div style="flex: 1;">
+                                                <div class="notif-text" style="font-weight: 600; font-size: 0.82rem; color: #1e293b; margin-bottom: 0.15rem;">{{ notif.title }}</div>
+                                                <div style="font-size: 0.78rem; color: #475569; line-height: 1.35; margin-bottom: 0.25rem;">{{ notif.message }}</div>
+                                                <span class="notif-time" style="font-size: 0.7rem; color: #94a3b8; display: block;">{{ notif.created_at.strftime('%d %b, %H:%M') if notif.created_at else '' }}</span>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div style="padding: 2rem 1rem; text-align: center; color: #94a3b8; font-size: 0.85rem;">
+                                        <i class="fa-solid fa-bell-slash" style="font-size: 1.8rem; margin-bottom: 0.5rem; display: block; color: #cbd5e1;"></i>
+                                        No notifications yet
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- User Profile Dropdown -->
+                    <div class="topbar-item user-profile-dropdown" id="profileDropdownBtn">
+                        {% if current_user.is_authenticated %}
+                            <div class="user-avatar-circle">
+                                {{ current_user.username[0] | upper }}
+                            </div>
+                            <div class="user-meta">
+                                <span class="profile-name">{{ current_user.username }}</span>
+                                <span class="profile-role">{{ current_user.role | upper }}</span>
+                            </div>
+                            <i class="fa-solid fa-chevron-down dropdown-caret"></i>
+                            
+                            <div class="dropdown-menu profile-menu" id="profileDropdown">
+                                <a href="{{ url_for('land.profile') }}" class="dropdown-item"><i class="fa-solid fa-circle-user"></i> My Profile</a>
+                                <a href="{{ url_for('land.owned_lands') }}" class="dropdown-item"><i class="fa-solid fa-house-laptop"></i> My Lands</a>
+                                <hr class="dropdown-divider">
+                                <a href="{{ url_for('auth.logout') }}" class="dropdown-item text-danger"><i class="fa-solid fa-right-from-bracket"></i> Logout Portal</a>
+                            </div>
+                        {% else %}
+                            <a href="{{ url_for('auth.login') }}" class="btn-login-top"><i class="fa-solid fa-right-to-bracket"></i> Citizen Login</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Alert Section -->
+            <div class="alert-container">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="gov-alert alert-{{ category }}">
+                                <i class="fa-solid {% if category == 'success' %}fa-circle-check{% elif category == 'warning' %}fa-circle-exclamation{% elif category == 'error' or category == 'danger' %}fa-circle-xmark{% else %}fa-circle-info{% endif %}"></i>
+                                <span class="alert-message">{{ message }}</span>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+            </div>
+            
+            <!-- Content Wrapper -->
+            <main class="page-content">
+                {% block content %}{% endblock %}
+            </main>
+
+            <!-- Rejection Details Modal (Global) -->
+            <div id="rejectionDetailsModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 10000; align-items: center; justify-content: center;">
+                <div style="background: #ffffff; padding: 2rem; border-radius: 16px; max-width: 500px; width: 90%; color: #1e293b; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); border: 1px solid #e2e8f0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 1rem; border-bottom: 1px solid #f1f5f9; margin-bottom: 1.25rem;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(239, 68, 68, 0.1); display: flex; align-items: center; justify-content: center; color: #ef4444; font-size: 1.25rem;">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                            </div>
+                            <div>
+                                <h3 style="margin: 0; font-size: 1.15rem; font-weight: 700; color: #0f172a;">Rejection Details</h3>
+                                <span style="font-size: 0.75rem; color: #64748b;">Official Land Registry Audit Record</span>
+                            </div>
+                        </div>
+                        <button type="button" onclick="closeRejectionModal()" style="background: transparent; border: none; font-size: 1.25rem; color: #94a3b8; cursor: pointer; padding: 0.25rem 0.5rem; border-radius: 6px;">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 0.85rem; font-size: 0.88rem;">
+                        <div style="display: flex; justify-content: space-between; padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 8px;">
+                            <span style="color: #64748b; font-weight: 500;">Request ID:</span>
+                            <strong id="modalReqId" class="mono" style="color: #0f172a;">-</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 8px;">
+                            <span style="color: #64748b; font-weight: 500;">Property / Survey Number:</span>
+                            <strong id="modalSurveyNum" style="color: #1e3a8a;">-</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 8px;">
+                            <span style="color: #64748b; font-weight: 500;">Rejected By:</span>
+                            <strong id="modalRejectedBy" style="color: #475569;">Registrar</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 8px;">
+                            <span style="color: #64748b; font-weight: 500;">Rejected Date:</span>
+                            <span id="modalRejectedDate" style="color: #334155; font-weight: 600;">-</span>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 0.35rem; padding: 0.85rem; background: #fef2f2; border: 1px solid #fee2e2; border-radius: 8px;">
+                            <span style="color: #991b1b; font-weight: 700; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em;"><i class="fa-solid fa-comment-slash"></i> Reason for Rejection</span>
+                            <p id="modalReason" style="margin: 0; color: #7f1d1d; font-size: 0.9rem; line-height: 1.45; word-break: break-word;">-</p>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 8px;">
+                            <span style="color: #64748b; font-weight: 500;">Status:</span>
+                            <span class="status-badge status-flagged" style="font-weight: 700; font-size: 0.75rem;"><i class="fa-solid fa-circle-xmark"></i> REJECTED</span>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 1.5rem; text-align: right;">
+                        <button type="button" class="btn btn-secondary" onclick="closeRejectionModal()" style="padding: 0.5rem 1.25rem; font-weight: 600;">Close</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pending Details Modal (Global) -->
+            <div id="pendingDetailsModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 10000; align-items: center; justify-content: center;">
+                <div style="background: #ffffff; padding: 2rem; border-radius: 16px; max-width: 500px; width: 90%; color: #1e293b; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); border: 1px solid #e2e8f0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 1rem; border-bottom: 1px solid #f1f5f9; margin-bottom: 1.25rem;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(37, 99, 235, 0.1); display: flex; align-items: center; justify-content: center; color: #2563eb; font-size: 1.25rem;">
+                                <i class="fa-solid fa-clock-rotate-left"></i>
+                            </div>
+                            <div>
+                                <h3 style="margin: 0; font-size: 1.15rem; font-weight: 700; color: #0f172a;" id="pendingModalTitle">Request Pending</h3>
+                                <span style="font-size: 0.75rem; color: #64748b;">Department of Revenue & Land Records</span>
+                            </div>
+                        </div>
+                        <button type="button" onclick="closePendingModal()" style="background: transparent; border: none; font-size: 1.25rem; color: #94a3b8; cursor: pointer; padding: 0.25rem 0.5rem; border-radius: 6px;">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 0.85rem; font-size: 0.88rem;">
+                        <div style="display: flex; justify-content: space-between; padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 8px;">
+                            <span style="color: #64748b; font-weight: 500;">Request Type:</span>
+                            <strong id="pendingModalType" style="color: #2563eb;">Land Registration Request</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 8px;">
+                            <span style="color: #64748b; font-weight: 500;">Survey Number / PID:</span>
+                            <strong id="pendingModalSurvey" style="color: #1e3a8a;">-</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 8px;">
+                            <span style="color: #64748b; font-weight: 500;">Submission Date:</span>
+                            <span id="pendingModalDate" style="color: #334155; font-weight: 600;">-</span>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 0.35rem; padding: 0.85rem; background: #eff6ff; border: 1px solid #dbeafe; border-radius: 8px;">
+                            <span style="color: #1e40af; font-weight: 700; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em;"><i class="fa-solid fa-circle-info"></i> Status Details</span>
+                            <p style="margin: 0; color: #1e3a8a; font-size: 0.88rem; line-height: 1.45;">Your request has been logged successfully and is pending verification by the Revenue Officer / Registrar. You will receive an official notification and land certificate once reviewed.</p>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 8px;">
+                            <span style="color: #64748b; font-weight: 500;">Current Status:</span>
+                            <span class="status-badge status-pending" id="pendingModalStatus" style="font-weight: 700; font-size: 0.75rem;"><i class="fa-solid fa-spinner fa-spin"></i> PENDING</span>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 1.5rem; text-align: right;">
+                        <button type="button" class="btn btn-secondary" onclick="closePendingModal()" style="padding: 0.5rem 1.25rem; font-weight: 600;">Close</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Officer Approval Status Modal (Global) -->
+            <div id="officerApprovalModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 10000; align-items: center; justify-content: center;">
+                <div style="background: #ffffff; padding: 2rem; border-radius: 16px; max-width: 520px; width: 90%; color: #1e293b; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); border: 1px solid #e2e8f0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 1rem; border-bottom: 1px solid #f1f5f9; margin-bottom: 1.25rem;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <div style="width: 42px; height: 42px; border-radius: 10px; background: rgba(16, 185, 129, 0.1); display: flex; align-items: center; justify-content: center; color: #10b981; font-size: 1.3rem;">
+                                <i class="fa-solid fa-user-check"></i>
+                            </div>
+                            <div>
+                                <h3 style="margin: 0; font-size: 1.15rem; font-weight: 700; color: #0f172a;">Registration Approved</h3>
+                                <span style="font-size: 0.75rem; color: #64748b;">Department of Revenue & Land Records</span>
+                            </div>
+                        </div>
+                        <button type="button" onclick="closeOfficerApprovalModal()" style="background: transparent; border: none; font-size: 1.25rem; color: #94a3b8; cursor: pointer; padding: 0.25rem 0.5rem; border-radius: 6px;">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 0.85rem; font-size: 0.88rem;">
+                        <div style="display: flex; justify-content: space-between; padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 8px;">
+                            <span style="color: #64748b; font-weight: 500;">Officer / Registration ID:</span>
+                            <strong id="offApprId" class="mono" style="color: #1e3a8a;">-</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 8px;">
+                            <span style="color: #64748b; font-weight: 500;">Officer Name:</span>
+                            <strong id="offApprName" style="color: #0f172a;">-</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 8px;">
+                            <span style="color: #64748b; font-weight: 500;">Official Email:</span>
+                            <span id="offApprEmail" style="color: #334155; font-weight: 600;">-</span>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 0.35rem; padding: 0.85rem; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px;">
+                            <span style="color: #065f46; font-weight: 700; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em;"><i class="fa-solid fa-circle-check"></i> Account Status</span>
+                            <p style="margin: 0; color: #047857; font-size: 0.88rem; line-height: 1.45;">Your Revenue Officer registration has been approved by the Administrator. Your account is now active and full dashboard access has been enabled.</p>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 8px;">
+                            <span style="color: #64748b; font-weight: 500;">Verification Status:</span>
+                            <span class="status-badge status-verified" style="font-weight: 700; font-size: 0.75rem;"><i class="fa-solid fa-check"></i> ACTIVE & VERIFIED</span>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 1.5rem; text-align: right;">
+                        <button type="button" class="btn btn-secondary" onclick="closeOfficerApprovalModal()" style="padding: 0.5rem 1.25rem; font-weight: 600;">Close</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Property Details Modal (Global) -->
+            <div id="propertyDetailsModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 10000; align-items: center; justify-content: center; overflow-y: auto; padding: 1.5rem 0;">
+                <div style="background: #ffffff; padding: 2rem; border-radius: 16px; max-width: 680px; width: 92%; color: #1e293b; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); border: 1px solid #e2e8f0; max-height: 90vh; overflow-y: auto;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 1rem; border-bottom: 1px solid #f1f5f9; margin-bottom: 1.25rem;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <div style="width: 42px; height: 42px; border-radius: 10px; background: rgba(37, 99, 235, 0.1); display: flex; align-items: center; justify-content: center; color: #2563eb; font-size: 1.3rem;">
+                                <i class="fa-solid fa-house-chimney"></i>
+                            </div>
+                            <div>
+                                <h3 style="margin: 0; font-size: 1.2rem; font-weight: 700; color: #0f172a;" id="propModalTitle">Property Details</h3>
+                                <span style="font-size: 0.78rem; color: #64748b;" id="propModalSub">Official Land Registry Record</span>
+                            </div>
+                        </div>
+                        <button type="button" onclick="closePropertyDetailsModal()" style="background: transparent; border: none; font-size: 1.25rem; color: #94a3b8; cursor: pointer; padding: 0.25rem 0.5rem; border-radius: 6px;">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0.85rem; font-size: 0.85rem;" id="propModalGrid">
+                        <!-- Populated by JS -->
+                    </div>
+
+                    <div style="margin-top: 1.5rem; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; padding-top: 1rem;">
+                        <a id="propModalFullLink" href="#" class="btn btn-primary" style="padding: 0.45rem 1rem; font-size: 0.82rem;">
+                            <i class="fa-solid fa-external-link"></i> View Full Land Record
+                        </a>
+                        <button type="button" class="btn btn-secondary" onclick="closePropertyDetailsModal()" style="padding: 0.45rem 1.2rem; font-weight: 600;">Close</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ownership Chain Modal (Global) -->
+            <div id="ownershipChainModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 10000; align-items: center; justify-content: center; overflow-y: auto; padding: 1.5rem 0;">
+                <div style="background: #ffffff; padding: 2rem; border-radius: 16px; max-width: 650px; width: 92%; color: #1e293b; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); border: 1px solid #e2e8f0; max-height: 90vh; overflow-y: auto;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 1rem; border-bottom: 1px solid #f1f5f9; margin-bottom: 1.25rem;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <div style="width: 42px; height: 42px; border-radius: 10px; background: rgba(16, 185, 129, 0.1); display: flex; align-items: center; justify-content: center; color: #10b981; font-size: 1.3rem;">
+                                <i class="fa-solid fa-timeline"></i>
+                            </div>
+                            <div>
+                                <h3 style="margin: 0; font-size: 1.2rem; font-weight: 700; color: #0f172a;" id="chainModalTitle">Title Ownership History</h3>
+                                <span style="font-size: 0.78rem; color: #64748b;" id="chainModalSub">Complete Registry Ownership Chain Records</span>
+                            </div>
+                        </div>
+                        <button type="button" onclick="closeOwnershipChainModal()" style="background: transparent; border: none; font-size: 1.25rem; color: #94a3b8; cursor: pointer; padding: 0.25rem 0.5rem; border-radius: 6px;">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+
+                    <div id="chainModalContent" style="display: flex; flex-direction: column; gap: 0.85rem;">
+                        <!-- Timeline steps populated by JS -->
+                    </div>
+
+                    <div style="margin-top: 1.5rem; text-align: right; border-top: 1px solid #f1f5f9; padding-top: 1rem;">
+                        <button type="button" class="btn btn-secondary" onclick="closeOwnershipChainModal()" style="padding: 0.45rem 1.2rem; font-weight: 600;">Close</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transfer Audit Details Modal (Global) -->
+            <div id="transferDetailsModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 10000; align-items: center; justify-content: center; overflow-y: auto; padding: 1.5rem 0;">
+                <div style="background: #ffffff; padding: 2rem; border-radius: 16px; max-width: 640px; width: 92%; color: #1e293b; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); border: 1px solid #e2e8f0; max-height: 90vh; overflow-y: auto;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 1rem; border-bottom: 1px solid #f1f5f9; margin-bottom: 1.25rem;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <div style="width: 42px; height: 42px; border-radius: 10px; background: rgba(37, 99, 235, 0.1); display: flex; align-items: center; justify-content: center; color: #2563eb; font-size: 1.3rem;">
+                                <i class="fa-solid fa-file-invoice"></i>
+                            </div>
+                            <div>
+                                <h3 style="margin: 0; font-size: 1.2rem; font-weight: 700; color: #0f172a;" id="transferModalTitle">Transfer Details</h3>
+                                <span style="font-size: 0.78rem; color: #64748b;" id="transferModalSub">Official Land Transfer Audit Log</span>
+                            </div>
+                        </div>
+                        <button type="button" onclick="closeTransferDetailsModal()" style="background: transparent; border: none; font-size: 1.25rem; color: #94a3b8; cursor: pointer; padding: 0.25rem 0.5rem; border-radius: 6px;">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0.85rem; font-size: 0.85rem;" id="transferModalGrid">
+                        <!-- Populated by JS -->
+                    </div>
+
+                    <div style="margin-top: 1.5rem; text-align: right; border-top: 1px solid #f1f5f9; padding-top: 1rem;">
+                        <button type="button" class="btn btn-secondary" onclick="closeTransferDetailsModal()" style="padding: 0.45rem 1.2rem; font-weight: 600;">Close</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- System Footer -->
+            <footer class="app-footer">
+                <div class="footer-left">
+                </div>
+                <div class="footer-right">
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <script>
+        function toggleSidebarGroup(headerElem) {
+            const parentGroup = headerElem.closest('.nav-item-group');
+            if (parentGroup) {
+                parentGroup.classList.toggle('open');
+            }
+        }
+
+        // --- PROPERTY DETAILS MODAL ---
+        function openPropertyDetailsModal(landId) {
+            const modal = document.getElementById('propertyDetailsModal');
+            if (!modal) return;
+
+            document.getElementById('propModalTitle').textContent = 'Loading Details...';
+            document.getElementById('propModalSub').textContent = 'Survey #' + landId;
+            document.getElementById('propModalGrid').innerHTML = '<div style="grid-column: 1/-1; padding: 2rem; text-align: center; color: #64748b;"><i class="fa-solid fa-spinner fa-spin" style="font-size: 1.5rem; margin-bottom: 0.5rem; display: block;"></i> Loading property record data...</div>';
+            document.getElementById('propModalFullLink').href = '/land/' + landId;
+            modal.style.display = 'flex';
+
+            fetch('/api/property-details/' + landId)
+                .then(res => res.json())
+                .then(d => {
+                    if (!d.success) {
+                        document.getElementById('propModalGrid').innerHTML = '<div style="grid-column: 1/-1; color: #ef4444; text-align: center;">Failed to load details.</div>';
+                        return;
+                    }
+                    document.getElementById('propModalTitle').textContent = 'Survey #' + d.survey_number;
+                    document.getElementById('propModalSub').textContent = 'PID: ' + d.pid + ' | Registered Owner: ' + d.owner_name;
+                    
+                    let docHtml = 'No Deed Uploaded';
+                    if (d.documents && d.documents.length > 0) {
+                        docHtml = d.documents.map(doc => `<a href="/view-document/${doc.id}" target="_blank" style="color: #2563eb; text-decoration: none; font-weight: 600;"><i class="fa-solid fa-file-pdf text-danger"></i> ${doc.type} (${doc.status.toUpperCase()})</a>`).join(', ');
+                    }
+
+                    const riskBadge = d.risk_level === 'High' ? 
+                        '<span class="status-badge status-flagged" style="font-size: 0.72rem;"><i class="fa-solid fa-triangle-exclamation"></i> High Risk</span>' :
+                        (d.risk_level === 'Medium' ? '<span class="status-badge status-pending" style="font-size: 0.72rem;"><i class="fa-solid fa-triangle-exclamation"></i> Medium Risk</span>' : '<span class="status-badge status-verified" style="font-size: 0.72rem;"><i class="fa-solid fa-circle-check"></i> Low Risk</span>');
+
+                    let historyHtml = '<div style="color: #64748b; font-size: 0.8rem; font-style: italic;">No transfer history records logged.</div>';
+                    if (d.history && d.history.length > 0) {
+                        historyHtml = d.history.map((h, idx) => `
+                            <div style="display: flex; gap: 0.75rem; align-items: flex-start; padding: 0.6rem 0.75rem; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.8rem;">
+                                <span class="mono" style="font-weight: 700; color: #2563eb; font-size: 0.78rem;">${h.transfer_ref}</span>
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 600; color: #0f172a;">From: <strong>${h.previous_owner}</strong> &rarr; To: <strong style="color: #059669;">${h.new_owner}</strong></div>
+                                    <div style="color: #64748b; font-size: 0.75rem; margin-top: 0.15rem;">Reason: ${h.reason} | Value: <strong class="mono" style="color: #059669;">${h.transfer_price_formatted}</strong> | Date: ${h.transfer_date}</div>
+                                </div>
+                                <span class="status-badge status-verified" style="font-size: 0.68rem;"><i class="fa-solid fa-circle-check"></i> ${h.status}</span>
+                            </div>
+                        `).join('');
+                    }
+
+                    document.getElementById('propModalGrid').innerHTML = `
+                        <div style="padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 8px; border: 1px solid #f1f5f9;"><span style="color: #64748b; display: block; font-size: 0.75rem;">Property PID</span><strong class="mono" style="color: #0f172a; font-size: 0.9rem;">${d.pid}</strong></div>
+                        <div style="padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 8px; border: 1px solid #f1f5f9;"><span style="color: #64748b; display: block; font-size: 0.75rem;">Survey Number</span><strong class="mono" style="color: #2563eb; font-size: 0.9rem;">Survey #${d.survey_number}</strong></div>
+                        <div style="padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 8px; border: 1px solid #f1f5f9;"><span style="color: #64748b; display: block; font-size: 0.75rem;">Owner Name</span><strong style="color: #0f172a;">${d.owner_name}</strong> <span style="font-size: 0.72rem; color: #64748b;" class="mono">(${d.owner_citizen_id})</span></div>
+                        <div style="padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 8px; border: 1px solid #f1f5f9;"><span style="color: #64748b; display: block; font-size: 0.75rem;">Total Area</span><strong class="mono" style="color: #0f172a;">${d.area} sq.m.</strong></div>
+                        <div style="padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 8px; border: 1px solid #f1f5f9;"><span style="color: #64748b; display: block; font-size: 0.75rem;">State</span><strong style="color: #334155;">${d.state}</strong></div>
+                        <div style="padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 8px; border: 1px solid #f1f5f9;"><span style="color: #64748b; display: block; font-size: 0.75rem;">District</span><strong style="color: #334155;">${d.district}</strong></div>
+                        <div style="padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 8px; border: 1px solid #f1f5f9;"><span style="color: #64748b; display: block; font-size: 0.75rem;">Taluk</span><strong style="color: #334155;">${d.taluk}</strong></div>
+                        <div style="padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 8px; border: 1px solid #f1f5f9;"><span style="color: #64748b; display: block; font-size: 0.75rem;">Hobli</span><strong style="color: #334155;">${d.hobli}</strong></div>
+                        <div style="padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 8px; border: 1px solid #f1f5f9;"><span style="color: #64748b; display: block; font-size: 0.75rem;">Village</span><strong style="color: #334155;">${d.village}</strong></div>
+                        <div style="padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 8px; border: 1px solid #f1f5f9;"><span style="color: #64748b; display: block; font-size: 0.75rem;">City</span><strong style="color: #334155;">${d.city}</strong></div>
+                        <div style="grid-column: 1/-1; padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 8px; border: 1px solid #f1f5f9;"><span style="color: #64748b; display: block; font-size: 0.75rem;">Property Address</span><strong style="color: #0f172a;">${d.address}</strong></div>
+                        <div style="padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 8px; border: 1px solid #f1f5f9;"><span style="color: #64748b; display: block; font-size: 0.75rem;">Property Type</span><strong style="color: #334155;">${d.property_type}</strong></div>
+                        <div style="padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 8px; border: 1px solid #f1f5f9;"><span style="color: #64748b; display: block; font-size: 0.75rem;">Declared Price</span><strong class="mono" style="color: #059669; font-size: 0.95rem;">${d.declared_value_formatted}</strong></div>
+                        <div style="padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 8px; border: 1px solid #f1f5f9;"><span style="color: #64748b; display: block; font-size: 0.75rem;">Registration Date</span><span style="color: #475569;">${d.registration_date}</span></div>
+                        <div style="padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 8px; border: 1px solid #f1f5f9;"><span style="color: #64748b; display: block; font-size: 0.75rem;">Title Verification Status</span><span class="status-badge status-verified" style="font-size: 0.72rem;"><i class="fa-solid fa-circle-check"></i> ${d.status}</span></div>
+                        <div style="padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 8px; border: 1px solid #f1f5f9;"><span style="color: #64748b; display: block; font-size: 0.75rem;">Deed Document Status</span><span style="font-size: 0.82rem; font-weight: 600; color: #1e40af;">${d.deed_status}</span></div>
+                        <div style="padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 8px; border: 1px solid #f1f5f9;"><span style="color: #64748b; display: block; font-size: 0.75rem;">OCR Verification Status</span><span style="font-size: 0.82rem; font-weight: 600; color: #059669;">${d.ocr_status}</span></div>
+                        <div style="padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 8px; border: 1px solid #f1f5f9;"><span style="color: #64748b; display: block; font-size: 0.75rem;">AI Security Risk</span>${riskBadge}</div>
+                        <div style="grid-column: 1/-1; padding: 0.65rem 0.85rem; background: #eff6ff; border-radius: 8px; border: 1px solid #dbeafe;"><span style="color: #1e40af; display: block; font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">Document / Deed Info</span><div style="margin-top: 0.2rem;">${docHtml}</div></div>
+                        <div style="grid-column: 1/-1; padding: 0.85rem; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+                            <span style="color: #334155; display: block; font-size: 0.78rem; font-weight: 700; text-transform: uppercase; margin-bottom: 0.5rem;"><i class="fa-solid fa-timeline"></i> Complete Ownership & Transfer History Log</span>
+                            <div style="display: flex; flex-direction: column; gap: 0.5rem;">${historyHtml}</div>
+                        </div>
+                    `;
+                })
+                .catch(err => {
+                    console.error(err);
+                    document.getElementById('propModalGrid').innerHTML = '<div style="grid-column: 1/-1; color: #ef4444; text-align: center;">Error loading property details.</div>';
+                });
+        }
+
+        function closePropertyDetailsModal() {
+            const modal = document.getElementById('propertyDetailsModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        // --- OWNERSHIP CHAIN MODAL ---
+        function openOwnershipChainModal(landId) {
+            const modal = document.getElementById('ownershipChainModal');
+            if (!modal) return;
+
+            document.getElementById('chainModalTitle').textContent = 'Loading Ownership Chain...';
+            document.getElementById('chainModalSub').textContent = 'Fetching registry chain records...';
+            document.getElementById('chainModalContent').innerHTML = '<div style="padding: 2rem; text-align: center; color: #64748b;"><i class="fa-solid fa-spinner fa-spin" style="font-size: 1.5rem; margin-bottom: 0.5rem; display: block;"></i> Loading chain records...</div>';
+            modal.style.display = 'flex';
+
+            fetch('/api/ownership-chain/' + landId)
+                .then(res => res.json())
+                .then(d => {
+                    if (!d.success || !d.chain) {
+                        document.getElementById('chainModalContent').innerHTML = '<div style="color: #ef4444; text-align: center;">No ownership chain logged.</div>';
+                        return;
+                    }
+                    document.getElementById('chainModalTitle').textContent = 'Survey #' + d.land.survey_number + ' - Ownership Chain';
+                    document.getElementById('chainModalSub').textContent = 'PID: ' + d.land.pid + ' | Current Owner: ' + d.land.owner_name + ' | Location: ' + d.land.location;
+
+                    let html = '';
+                    d.chain.forEach((item, idx) => {
+                        html += `
+                            <div style="display: flex; gap: 1rem; position: relative; padding-bottom: ${idx === d.chain.length ? '0' : '1rem'};">
+                                ${idx === d.chain.length ? '' : '<div style="position: absolute; top: 32px; left: 19px; width: 2px; height: calc(100% - 15px); background: #cbd5e1;"></div>'}
+                                <div style="width: 40px; height: 40px; border-radius: 50%; background: ${idx === d.chain.length ? '#10b981' : '#2563eb'}; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; flex-shrink: 0; z-index: 1;">
+                                    #${item.step}
+                                </div>
+                                <div style="flex: 1; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.85rem 1rem;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+                                        <strong style="color: #2563eb; font-size: 0.82rem;" class="mono">${item.ref}</strong>
+                                        <span style="font-size: 0.75rem; color: #64748b;">${item.transfer_date}</span>
+                                    </div>
+                                    <div style="font-size: 0.88rem; color: #0f172a; margin-bottom: 0.3rem;">
+                                        From: <strong style="color: #475569;">${item.previous_owner}</strong> &rarr; To: <strong style="color: #059669;">${item.new_owner}</strong>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; margin-top: 0.4rem; border-top: 1px solid #f1f5f9; padding-top: 0.4rem;">
+                                        <span style="color: #64748b;">Valuation: <strong class="mono" style="color: #059669;">${item.transfer_price_formatted}</strong></span>
+                                        <span class="status-badge status-verified" style="font-size: 0.68rem;"><i class="fa-solid fa-circle-check"></i> ${item.status}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    document.getElementById('chainModalContent').innerHTML = html;
+                })
+                .catch(err => {
+                    console.error(err);
+                    document.getElementById('chainModalContent').innerHTML = '<div style="color: #ef4444; text-align: center;">Error loading ownership chain.</div>';
+                });
+        }
+
+        function closeOwnershipChainModal() {
+            const modal = document.getElementById('ownershipChainModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        // --- TRANSFER DETAILS MODAL ---
+        function openTransferDetailsModal(transferId) {
+            const modal = document.getElementById('transferDetailsModal');
+            if (!modal) return;
+
+            document.getElementById('transferModalTitle').textContent = 'Loading Audit Details...';
+            document.getElementById('transferModalSub').textContent = 'Fetching transfer log #' + transferId;
+            document.getElementById('transferModalGrid').innerHTML = '<div style="grid-column: 1/-1; padding: 2rem; text-align: center; color: #64748b;"><i class="fa-solid fa-spinner fa-spin" style="font-size: 1.5rem; margin-bottom: 0.5rem; display: block;"></i> Loading audit log...</div>';
+            modal.style.display = 'flex';
+
+            fetch('/api/transfer-details/' + transferId)
+                .then(res => res.json())
+                .then(d => {
+                    if (!d.success) {
+                        document.getElementById('transferModalGrid').innerHTML = '<div style="grid-column: 1/-1; color: #ef4444; text-align: center;">Failed to load transfer details.</div>';
+                        return;
+                    }
+                    document.getElementById('transferModalTitle').textContent = 'Transfer Log: ' + d.transfer_ref;
+                    document.getElementById('transferModalSub').textContent = 'Survey #' + d.survey_number + ' | PID: ' + d.pid;
+
+                    let docHtml = 'No Deed Attached';
+                    if (d.documents && d.documents.length > 0) {
+                        docHtml = d.documents.map(doc => `<a href="/view-document/${doc.id}" target="_blank" style="color: #2563eb; text-decoration: none; font-weight: 600;"><i class="fa-solid fa-file-pdf text-danger"></i> ${doc.type} (${doc.status.toUpperCase()})</a>`).join(', ');
+                    }
+
+                    document.getElementById('transferModalGrid').innerHTML = `
+                        <div style="padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 8px; border: 1px solid #f1f5f9;"><span style="color: #64748b; display: block; font-size: 0.75rem;">Transfer Reference</span><strong class="mono" style="color: #2563eb; font-size: 0.9rem;">${d.transfer_ref}</strong></div>
+                        <div style="padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 8px; border: 1px solid #f1f5f9;"><span style="color: #64748b; display: block; font-size: 0.75rem;">Survey Number</span><strong class="mono" style="color: #0f172a;">Survey #${d.survey_number}</strong></div>
+                        <div style="padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 8px; border: 1px solid #f1f5f9;"><span style="color: #64748b; display: block; font-size: 0.75rem;">Property PID</span><strong class="mono" style="color: #0f172a;">${d.pid}</strong></div>
+                        <div style="padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 8px; border: 1px solid #f1f5f9;"><span style="color: #64748b; display: block; font-size: 0.75rem;">Seller (Previous Owner)</span><strong style="color: #475569;">${d.seller_name}</strong> <span style="font-size: 0.72rem; color: #64748b;" class="mono">(${d.seller_cid})</span></div>
+                        <div style="padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 8px; border: 1px solid #f1f5f9;"><span style="color: #64748b; display: block; font-size: 0.75rem;">Buyer (New Owner)</span><strong style="color: #059669;">${d.buyer_name}</strong> <span style="font-size: 0.72rem; color: #64748b;" class="mono">(${d.buyer_cid})</span></div>
+                        <div style="padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 8px; border: 1px solid #f1f5f9;"><span style="color: #64748b; display: block; font-size: 0.75rem;">Transfer Reason / Type</span><strong style="color: #2563eb;">${d.transfer_reason}</strong></div>
+                        <div style="padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 8px; border: 1px solid #f1f5f9;"><span style="color: #64748b; display: block; font-size: 0.75rem;">Declared Price</span><strong class="mono" style="color: #059669; font-size: 0.95rem;">${d.declared_price_formatted}</strong></div>
+                        <div style="padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 8px; border: 1px solid #f1f5f9;"><span style="color: #64748b; display: block; font-size: 0.75rem;">Submitted Date</span><span style="color: #475569;">${d.submitted_date}</span></div>
+                        <div style="padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 8px; border: 1px solid #f1f5f9;"><span style="color: #64748b; display: block; font-size: 0.75rem;">Approval Date</span><span style="color: #475569;">${d.approval_date}</span></div>
+                        <div style="padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 8px; border: 1px solid #f1f5f9;"><span style="color: #64748b; display: block; font-size: 0.75rem;">Completion Timestamp</span><span style="color: #475569;">${d.completion_date}</span></div>
+                        <div style="padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 8px; border: 1px solid #f1f5f9;"><span style="color: #64748b; display: block; font-size: 0.75rem;">Registrar Approval</span><span class="status-badge status-verified" style="font-size: 0.72rem;"><i class="fa-solid fa-check"></i> ${d.registrar_status}</span></div>
+                        <div style="padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 8px; border: 1px solid #f1f5f9;"><span style="color: #64748b; display: block; font-size: 0.75rem;">Registry Audit Status</span><span class="status-badge status-verified" style="font-size: 0.72rem;"><i class="fa-solid fa-check-double"></i> ${d.audit_status}</span></div>
+                        <div style="grid-column: 1/-1; padding: 0.65rem 0.85rem; background: #eff6ff; border-radius: 8px; border: 1px solid #dbeafe;"><span style="color: #1e40af; display: block; font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">Related Document Information</span><div style="margin-top: 0.2rem;">${docHtml}</div></div>
+                    `;
+                })
+                .catch(err => {
+                    console.error(err);
+                    document.getElementById('transferModalGrid').innerHTML = '<div style="grid-column: 1/-1; color: #ef4444; text-align: center;">Error loading transfer details.</div>';
+                });
+        }
+
+        function closeTransferDetailsModal() {
+            const modal = document.getElementById('transferDetailsModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        function openRejectionModal(typeStr, itemId) {
+            const modal = document.getElementById('rejectionDetailsModal');
+            if (!modal) return;
+
+            document.getElementById('modalReqId').textContent = 'Loading...';
+            document.getElementById('modalSurveyNum').textContent = 'Loading...';
+            document.getElementById('modalRejectedBy').textContent = 'Registrar';
+            document.getElementById('modalRejectedDate').textContent = 'Loading...';
+            document.getElementById('modalReason').textContent = 'Fetching rejection record details...';
+            modal.style.display = 'flex';
+
+            fetch('/api/rejection-details/' + typeStr + '/' + itemId)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.error) {
+                        document.getElementById('modalReason').textContent = data.error;
+                    } else {
+                        document.getElementById('modalReqId').textContent = data.request_id || '-';
+                        document.getElementById('modalSurveyNum').textContent = data.survey_number ? (data.survey_number.startsWith('Officer') ? data.survey_number : 'Survey #' + data.survey_number) : '-';
+                        document.getElementById('modalRejectedBy').textContent = data.rejected_by || 'Administrator';
+                        document.getElementById('modalRejectedDate').textContent = data.rejected_date || 'N/A';
+                        document.getElementById('modalReason').textContent = data.reason || 'No specific rejection reason provided.';
+                    }
+                })
+                .catch(err => {
+                    console.error('Failed to fetch rejection details:', err);
+                    document.getElementById('modalReason').textContent = 'Could not load rejection details.';
+                });
+        }
+
+        function closeRejectionModal() {
+            const modal = document.getElementById('rejectionDetailsModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        function openOfficerApprovalModal(userId) {
+            const modal = document.getElementById('officerApprovalModal');
+            if (!modal) return;
+
+            document.getElementById('offApprId').textContent = 'Loading...';
+            document.getElementById('offApprName').textContent = 'Loading...';
+            document.getElementById('offApprEmail').textContent = 'Loading...';
+            modal.style.display = 'flex';
+
+            const uid = userId || '{{ current_user.id if current_user.is_authenticated else "" }}';
+            fetch('/api/officer-status/' + uid)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('offApprId').textContent = data.officer_id || '-';
+                        document.getElementById('offApprName').textContent = data.username || '-';
+                        document.getElementById('offApprEmail').textContent = data.email || '-';
+                    }
+                })
+                .catch(err => console.error(err));
+        }
+
+        function closeOfficerApprovalModal() {
+            const modal = document.getElementById('officerApprovalModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        function openPendingModal(typeStr, itemId) {
+            const modal = document.getElementById('pendingDetailsModal');
+            if (!modal) return;
+
+            document.getElementById('pendingModalTitle').textContent = 'Loading Pending Details...';
+            document.getElementById('pendingModalSurvey').textContent = 'Loading...';
+            document.getElementById('pendingModalType').textContent = typeStr === 'transfer' ? 'Land Transfer Request' : 'Land Registration Request';
+            document.getElementById('pendingModalStatus').innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> PENDING';
+            document.getElementById('pendingModalDate').textContent = 'Loading...';
+            modal.style.display = 'flex';
+
+            fetch('/api/pending-details/' + typeStr + '/' + itemId)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.error) {
+                        document.getElementById('pendingModalTitle').textContent = 'Pending Request Information';
+                    } else {
+                        document.getElementById('pendingModalTitle').textContent = (typeStr === 'transfer' ? 'Transfer Request #' : 'Registration Request #') + (data.ref || itemId);
+                        document.getElementById('pendingModalSurvey').textContent = data.survey_number ? 'Survey #' + data.survey_number : '-';
+                        document.getElementById('pendingModalDate').textContent = data.created_at || '-';
+                        document.getElementById('pendingModalStatus').innerHTML = '<i class="fa-solid fa-clock"></i> ' + (data.status ? data.status.toUpperCase() : 'PENDING');
+                    }
+                })
+                .catch(err => {
+                    console.error('Failed to fetch pending details:', err);
+                });
+        }
+
+        function closePendingModal() {
+            const modal = document.getElementById('pendingDetailsModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        function handleNotificationClick(notifId, relRequestId, relLandId, typeStr) {
+            fetch('/api/notifications/mark-read/' + notifId, { method: 'POST' })
+                .then(() => {
+                    if (typeStr === 'officer_registration_approved') {
+                        const uid = relRequestId || '{{ current_user.id if current_user.is_authenticated else "" }}';
+                        openOfficerApprovalModal(uid);
+                    } else if (typeStr === 'officer_registration_rejected') {
+                        const uid = relRequestId || '{{ current_user.id if current_user.is_authenticated else "" }}';
+                        openRejectionModal('officer', uid);
+                    } else if (typeStr.includes('rejected') || typeStr === 'rejection') {
+                        if (relRequestId) {
+                            openRejectionModal('transfer', relRequestId);
+                        } else if (relLandId) {
+                            openRejectionModal('registration', relLandId);
+                        }
+                    } else if (typeStr === 'final_transfer_approved' && relRequestId) {
+                        window.location.href = '/certificate/final/' + relRequestId;
+                    } else if (typeStr.includes('approved') || typeStr === 'approval') {
+                        if (relLandId && (typeStr.includes('registration') || typeStr === 'approval')) {
+                            window.location.href = '/certificate/registration/' + relLandId;
+                        } else if (relRequestId && typeStr.includes('transfer')) {
+                            window.location.href = '/certificate/transfer/' + relRequestId;
+                        } else if (relLandId) {
+                            window.location.href = '/certificate/registration/' + relLandId;
+                        } else if (relRequestId) {
+                            window.location.href = '/certificate/transfer/' + relRequestId;
+                        }
+                    } else if (typeStr.includes('pending')) {
+                        if (relRequestId) {
+                            openPendingModal('transfer', relRequestId);
+                        } else if (relLandId) {
+                            openPendingModal('registration', relLandId);
+                        }
+                    }
+                })
+                .catch(err => console.error(err));
+        }
+
+        function markAllNotificationsRead() {
+            fetch('/api/notifications/mark-all-read', { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.reload();
+                    }
+                });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Profile dropdown toggle
+            const profileBtn = document.getElementById('profileDropdownBtn');
+            const profileMenu = document.getElementById('profileDropdown');
+            if (profileBtn) {
+                profileBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    profileMenu.classList.toggle('show');
+                });
+            }
+
+            // Notification dropdown toggle
+            const notifBtn = document.getElementById('notifBtn');
+            const notifMenu = document.getElementById('notifDropdown');
+            if (notifBtn) {
+                notifBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    notifMenu.classList.toggle('show');
+                });
+            }
+
+            // Close dropdowns on click outside
+            window.addEventListener('click', function() {
+                if (profileMenu) profileMenu.classList.remove('show');
+                if (notifMenu) notifMenu.classList.remove('show');
+            });
+
+            // Sidebar toggle
+            const toggleBtn = document.getElementById('sidebarToggle');
+            const sidebar = document.querySelector('.app-sidebar');
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', function() {
+                    sidebar.classList.toggle('collapsed');
+                });
+            }
+        });
+    </script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

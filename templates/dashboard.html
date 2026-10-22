@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+
+{% block title %}Citizen Registry Dashboard - AI Smart Land Registry System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="header-left">
+        {% if current_user.role == 'citizen' %}
+            <h1>Citizen Registry Dashboard</h1>
+        {% elif current_user.role == 'registrar' %}
+            <h1>Registrar Control Dashboard</h1>
+        {% else %}
+            <h1>Administrator Control Dashboard</h1>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Metrics Cards Section -->
+<div class="metrics-grid">
+    {% if current_user.role == 'citizen' %}
+        <div class="metric-card card-blue">
+            <div class="card-icon"><i class="fa-solid fa-house-chimney"></i></div>
+            <div class="card-data">
+                <span class="card-label">MY PROPERTIES</span>
+                <h3 class="card-value">{{ my_lands_count }}</h3>
+            </div>
+        </div>
+        
+        <div class="metric-card card-amber">
+            <div class="card-icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
+            <div class="card-data">
+                <span class="card-label">PENDING REQUESTS</span>
+                <h3 class="card-value">{{ my_pending_requests_count if my_pending_requests_count is defined else (my_transfer_requests | selectattr('status', 'equalto', 'pending') | list | length) }}</h3>
+            </div>
+        </div>
+        
+        <div class="metric-card card-indigo">
+            <div class="card-icon"><i class="fa-solid fa-file-circle-check"></i></div>
+            <div class="card-data">
+                <span class="card-label">VERIFIED DOCUMENTS</span>
+                <h3 class="card-value">{{ verified_docs_count if verified_docs_count is defined else 0 }}</h3>
+            </div>
+        </div>
+    {% else %}
+        <div class="metric-card card-blue">
+            <div class="card-icon"><i class="fa-solid fa-users"></i></div>
+            <div class="card-data">
+                <span class="card-label">Total Verified Citizens</span>
+                <h3 class="card-value">{{ total_citizens }}</h3>
+            </div>
+        </div>
+        
+        <div class="metric-card card-indigo">
+            <div class="card-icon"><i class="fa-solid fa-house-circle-check"></i></div>
+            <div class="card-data">
+                <span class="card-label">Registered Lands Count</span>
+                <h3 class="card-value">{{ registered_lands_count }}</h3>
+            </div>
+        </div>
+        
+        <div class="metric-card card-amber">
+            <div class="card-icon"><i class="fa-solid fa-right-left"></i></div>
+            <div class="card-data">
+                <span class="card-label">Land Transfer Requests</span>
+                <h3 class="card-value">{{ total_requests }}</h3>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Shortcut Operations Grid based on User Role -->
+<div class="shortcuts-grid">
+    {% if current_user.role == 'citizen' %}
+        <div class="shortcut-card">
+            <div class="shortcut-header">
+                <i class="fa-solid fa-circle-plus shortcut-icon"></i>
+                <h4>Land Registration</h4>
+            </div>
+            <p class="shortcut-desc">Register a new land or property.</p>
+            <a href="{{ url_for('land.register_land') }}" class="btn-shortcut">Register Land <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+        
+        <div class="shortcut-card">
+            <div class="shortcut-header">
+                <i class="fa-solid fa-house-chimney shortcut-icon"></i>
+                <h4>Land Records & Ownership</h4>
+            </div>
+            <p class="shortcut-desc">View your registered properties and ownership details.</p>
+            <a href="{{ url_for('land.owned_lands') }}" class="btn-shortcut">View Owned Lands <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+        
+        <div class="shortcut-card">
+            <div class="shortcut-header">
+                <i class="fa-solid fa-right-left shortcut-icon"></i>
+                <h4>Land Request & Approval</h4>
+            </div>
+            <p class="shortcut-desc">Track and manage your land transfer requests.</p>
+            <a href="{{ url_for('land.transfer_requests') }}" class="btn-shortcut">View Requests <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+    {% else %}
+        <div class="shortcut-card">
+            <div class="shortcut-header">
+                <i class="fa-solid fa-clock-rotate-left shortcut-icon"></i>
+                <h4>Land Request & Approval</h4>
+            </div>
+            <p class="shortcut-desc">Audit incoming land transfer requests, verify title docs, and approve ownership updates.</p>
+            <a href="{{ url_for('land.pending_transfer_approvals') }}" class="btn-shortcut">Pending Queue <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+        
+        <div class="shortcut-card">
+            <div class="shortcut-header">
+                <i class="fa-solid fa-triangle-exclamation shortcut-icon"></i>
+                <h4>AI Fraud Detection</h4>
+            </div>
+            <p class="shortcut-desc">Review transaction alerts, duplicate survey numbers, and document risk metrics.</p>
+            <a href="{{ url_for('land.fraud_detection') }}" class="btn-shortcut">Fraud Center <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+        
+        <div class="shortcut-card">
+            <div class="shortcut-header">
+                <i class="fa-solid fa-database shortcut-icon"></i>
+                <h4>Land Records & Ownership</h4>
+            </div>
+            <p class="shortcut-desc">Search registered land records, title ownership chains, and transfer history.</p>
+            <a href="{{ url_for('land.records') }}" class="btn-shortcut">Search Records <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+    {% endif %}
+</div>
+
+<!-- My Land Transfer Requests Section -->
+<div class="section-card">
+    <div class="card-header-row">
+        <h3><i class="fa-solid fa-right-left"></i> Recent Land Transfer Requests</h3>
+    </div>
+    
+    <div class="table-container">
+        <table class="gov-table">
+            <thead>
+                <tr>
+                    <th>Request ID</th>
+                    <th>Survey Number</th>
+                    <th>Seller</th>
+                    <th>Buyer</th>
+                    <th>Declared Value</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if my_transfer_requests %}
+                    {% for req in my_transfer_requests %}
+                        <tr>
+                            <td class="mono font-bold">TR-{{ "%04d"|format(req.id) }}</td>
+                            <td class="mono font-bold">Survey #{{ req.land.survey_number }}</td>
+                            <td>{{ req.seller.username if req.seller else (req.land.owner.username if req.land and req.land.owner else 'Registry') }}</td>
+                            <td><strong>{{ req.buyer.username if req.buyer else 'N/A' }}</strong></td>
+                            <td>{{ req.land.price | currency }}</td>
+                            <td style="font-size: 0.8rem;">{{ req.created_at.strftime('%Y-%m-%d') }}</td>
+                            <td>
+                                {% if req.status == 'approved' %}
+                                    <span class="status-badge status-verified">Approved & Transferred</span>
+                                {% elif req.status == 'rejected' %}
+                                    <span class="status-badge status-flagged">Rejected</span>
+                                {% else %}
+                                    <span class="status-badge status-pending">Pending Approval</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7" class="table-empty">
+                            <i class="fa-solid fa-inbox"></i>
+                            <p>No recent land transfer requests.</p>
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

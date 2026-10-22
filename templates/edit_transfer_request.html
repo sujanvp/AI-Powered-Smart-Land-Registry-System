@@ -1,0 +1,243 @@
+{% extends 'base.html' %}
+
+{% block title %}Land Request & Approval - Edit Transfer Request #{{ req.id }} - Smart Land Registry{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <div class="dashboard-title">
+        <h1>Land Request & Approval — Edit Transfer Request #{{ req.transfer_ref }}</h1>
+    </div>
+</div>
+
+<div class="glass-card" style="border: 2px solid #2563eb; box-shadow: 0 10px 25px rgba(37, 99, 235, 0.1); margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 1rem; margin-bottom: 1.5rem;">
+        <div>
+            <h2 style="font-size: 1.35rem; font-weight: 800; color: #1e3a8a; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fa-solid fa-pen-to-square"></i> EDIT TRANSFER REQUEST — Ref #{{ req.transfer_ref }}
+            </h2>
+        </div>
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <a href="{{ url_for('land.transfer_requests') }}" class="btn-action-secondary" style="text-decoration: none; font-size: 0.8rem;">
+                <i class="fa-solid fa-arrow-left"></i> Back to Transfer Requests
+            </a>
+            <a href="{{ url_for('land.view_transfer_certificate', transfer_id=req.id) }}" target="_blank" class="btn-action-primary" style="text-decoration: none; font-size: 0.8rem; background: #2563eb; border-color: #2563eb;">
+                <i class="fa-solid fa-file-contract"></i> View Transfer Approval Certificate
+            </a>
+        </div>
+    </div>
+
+    <!-- Actual Database Record Summary -->
+    <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 1.25rem; margin-bottom: 2rem;">
+        <h3 style="font-size: 0.95rem; font-weight: 800; color: #1e3a8a; text-transform: uppercase; margin-top: 0; margin-bottom: 1rem; letter-spacing: 0.5px;">
+            <i class="fa-solid fa-database"></i> Land Transfer Record Information
+        </h3>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; font-size: 0.85rem;">
+            <div>
+                <span style="color: #64748b; font-weight: 600; display: block; font-size: 0.75rem; text-transform: uppercase;">Transfer Reference</span>
+                <strong class="mono" style="color: #15803d;">{{ req.transfer_ref }}</strong>
+            </div>
+            <div>
+                <span style="color: #64748b; font-weight: 600; display: block; font-size: 0.75rem; text-transform: uppercase;">Survey Number</span>
+                <strong class="mono" style="color: #1e3a8a;">{{ req.land.survey_number if req.land else 'N/A' }}</strong>
+            </div>
+            <div>
+                <span style="color: #64748b; font-weight: 600; display: block; font-size: 0.75rem; text-transform: uppercase;">Property PID</span>
+                <strong class="mono">{{ req.land.pid if (req.land and req.land.pid) else (('PID-KRN-' ~ "%06d"|format(req.land.id)) if req.land else 'N/A') }}</strong>
+            </div>
+            <div>
+                <span style="color: #64748b; font-weight: 600; display: block; font-size: 0.75rem; text-transform: uppercase;">Transfer Reason</span>
+                <strong>{{ req.transfer_reason or 'Sale' }}</strong>
+            </div>
+            <div>
+                <span style="color: #64748b; font-weight: 600; display: block; font-size: 0.75rem; text-transform: uppercase;">Current Owner / Seller</span>
+                <strong>{{ req.seller.username if req.seller else (req.land.owner.username if req.land and req.land.owner else 'Seller') }}</strong>
+                <div style="font-size: 0.72rem; color: #64748b;" class="mono">ID: {{ req.seller_citizen_id or (req.seller.citizen_id if req.seller else 'N/A') }}</div>
+            </div>
+            <div>
+                <span style="color: #64748b; font-weight: 600; display: block; font-size: 0.75rem; text-transform: uppercase;">Proposed Buyer / New Owner</span>
+                <strong style="color: #15803d;">{{ req.buyer.username if req.buyer else 'Buyer' }}</strong>
+                <div style="font-size: 0.72rem; color: #15803d;" class="mono">ID: {{ req.buyer_citizen_id or (req.buyer.citizen_id if req.buyer else 'N/A') }}</div>
+            </div>
+            <div>
+                <span style="color: #64748b; font-weight: 600; display: block; font-size: 0.75rem; text-transform: uppercase;">Declared Valuation</span>
+                <strong style="color: #059669;" class="mono">₹{{ (req.bid_price or (req.land.price if req.land else 0)) | currency }}</strong>
+            </div>
+            <div>
+                <span style="color: #64748b; font-weight: 600; display: block; font-size: 0.75rem; text-transform: uppercase;">Current Status</span>
+                {% if req.status in ['completed', 'final_registered'] %}
+                    <span class="status-badge status-verified" style="font-size: 0.72rem; padding: 0.2rem 0.5rem; background: #dcfce7; color: #15803d;">
+                        FINAL REGISTERED / TRANSFER COMPLETED
+                    </span>
+                {% else %}
+                    <span class="status-badge status-verified" style="font-size: 0.72rem; padding: 0.2rem 0.5rem; background: #e0f2fe; color: #0369a1;">
+                        APPROVED FOR OFFLINE REGISTRATION
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Form for Offline Completion -->
+    <form action="{{ url_for('land.edit_transfer_request', request_id=req.id) }}" method="POST" enctype="multipart/form-data">
+        
+        <h3 style="font-size: 1.1rem; font-weight: 800; color: #0f172a; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
+            <i class="fa-solid fa-file-signature" style="color: #2563eb;"></i> OFFLINE REGISTRATION / DOCUMENTATION
+        </h3>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+            
+            <!-- 1. Seller Verification & Signature Upload -->
+            <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 1.25rem; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                <h4 style="margin-top: 0; color: #1e293b; font-size: 0.95rem; font-weight: 800; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem;">
+                    <i class="fa-solid fa-user-check" style="color: #2563eb;"></i> Seller Identity / Signature
+                </h4>
+                <div style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                    <label style="display: flex; align-items: center; gap: 0.6rem; font-size: 0.88rem; color: #334155; font-weight: 700; cursor: pointer;">
+                        <input type="checkbox" name="seller_id_verified" value="1" {% if req.offline_data.get('seller_id_verified') %}checked{% endif %} style="width: 18px; height: 18px; accent-color: #15803d;">
+                        <span>Seller identity verified</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.6rem; font-size: 0.88rem; color: #334155; font-weight: 700; cursor: pointer;">
+                        <input type="checkbox" name="seller_sig_verified" value="1" {% if req.offline_data.get('seller_sig_verified') %}checked{% endif %} style="width: 18px; height: 18px; accent-color: #15803d;">
+                        <span>Seller signature verified</span>
+                    </label>
+
+                    <div style="margin-top: 0.5rem; border-top: 1px dashed #cbd5e1; padding-top: 0.75rem;">
+                        <label style="display: block; font-size: 0.78rem; font-weight: 700; color: #475569; margin-bottom: 0.35rem;">
+                            Upload Seller Signed Document / Signature:
+                        </label>
+                        <input type="file" name="seller_signature_file" class="form-control" style="width: 100%; font-size: 0.78rem; padding: 0.35rem; border: 1px solid #cbd5e1; border-radius: 6px;" accept="image/*,.pdf">
+                        {% if req.seller_signature_path %}
+                            <div style="margin-top: 0.4rem; font-size: 0.75rem;">
+                                <a href="{{ url_for('document.view_document_by_path', path=req.seller_signature_path) }}" target="_blank" style="color: #2563eb; text-decoration: underline; font-weight: 600;">
+                                    <i class="fa-solid fa-signature"></i> View Uploaded Seller Signature
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Buyer Verification & Signature Upload -->
+            <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 1.25rem; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                <h4 style="margin-top: 0; color: #1e293b; font-size: 0.95rem; font-weight: 800; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem;">
+                    <i class="fa-solid fa-user-gear" style="color: #15803d;"></i> Buyer Identity / Signature
+                </h4>
+                <div style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                    <label style="display: flex; align-items: center; gap: 0.6rem; font-size: 0.88rem; color: #334155; font-weight: 700; cursor: pointer;">
+                        <input type="checkbox" name="buyer_id_verified" value="1" {% if req.offline_data.get('buyer_id_verified') %}checked{% endif %} style="width: 18px; height: 18px; accent-color: #15803d;">
+                        <span>Buyer identity verified</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.6rem; font-size: 0.88rem; color: #334155; font-weight: 700; cursor: pointer;">
+                        <input type="checkbox" name="buyer_sig_verified" value="1" {% if req.offline_data.get('buyer_sig_verified') %}checked{% endif %} style="width: 18px; height: 18px; accent-color: #15803d;">
+                        <span>Buyer signature verified</span>
+                    </label>
+
+                    <div style="margin-top: 0.5rem; border-top: 1px dashed #cbd5e1; padding-top: 0.75rem;">
+                        <label style="display: block; font-size: 0.78rem; font-weight: 700; color: #475569; margin-bottom: 0.35rem;">
+                            Upload Buyer Signed Document / Signature:
+                        </label>
+                        <input type="file" name="buyer_signature_file" class="form-control" style="width: 100%; font-size: 0.78rem; padding: 0.35rem; border: 1px solid #cbd5e1; border-radius: 6px;" accept="image/*,.pdf">
+                        {% if req.buyer_signature_path %}
+                            <div style="margin-top: 0.4rem; font-size: 0.75rem;">
+                                <a href="{{ url_for('document.view_document_by_path', path=req.buyer_signature_path) }}" target="_blank" style="color: #2563eb; text-decoration: underline; font-weight: 600;">
+                                    <i class="fa-solid fa-signature"></i> View Uploaded Buyer Signature
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Document Verification & File Upload -->
+            <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 1.25rem; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                <h4 style="margin-top: 0; color: #1e293b; font-size: 0.95rem; font-weight: 800; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem;">
+                    <i class="fa-solid fa-file-circle-check" style="color: #d97706;"></i> Document Verification
+                </h4>
+                <div style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                    <label style="display: flex; align-items: center; gap: 0.6rem; font-size: 0.88rem; color: #334155; font-weight: 700; cursor: pointer;">
+                        <input type="checkbox" name="doc_orig_verified" value="1" {% if req.offline_data.get('doc_orig_verified') %}checked{% endif %} style="width: 18px; height: 18px; accent-color: #15803d;">
+                        <span>Original documents verified</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.6rem; font-size: 0.88rem; color: #334155; font-weight: 700; cursor: pointer;">
+                        <input type="checkbox" name="doc_supp_verified" value="1" {% if req.offline_data.get('doc_supp_verified') %}checked{% endif %} style="width: 18px; height: 18px; accent-color: #15803d;">
+                        <span>Required supporting documents verified</span>
+                    </label>
+
+                    <div style="margin-top: 0.5rem; border-top: 1px dashed #cbd5e1; padding-top: 0.75rem;">
+                        <label style="display: block; font-size: 0.78rem; font-weight: 700; color: #475569; margin-bottom: 0.35rem;">
+                            Upload Required Offline Registration Documents:
+                        </label>
+                        <input type="file" name="offline_doc_file" class="form-control" style="width: 100%; font-size: 0.78rem; padding: 0.35rem; border: 1px solid #cbd5e1; border-radius: 6px;" accept="image/*,.pdf,.doc,.docx">
+                        {% if req.offline_document_path %}
+                            <div style="margin-top: 0.4rem; font-size: 0.75rem;">
+                                <a href="{{ url_for('document.view_document_by_path', path=req.offline_document_path) }}" target="_blank" style="color: #2563eb; text-decoration: underline; font-weight: 600;">
+                                    <i class="fa-solid fa-file-pdf" style="color: #ef4444;"></i> View/Download Uploaded Offline Deed
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Offline Registration Details Inputs -->
+        <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem;">
+            <h4 style="margin-top: 0; color: #0f172a; font-size: 1rem; font-weight: 800; margin-bottom: 1.25rem;">
+                <i class="fa-solid fa-building-columns" style="color: #15803d;"></i> Offline Registration Details
+            </h4>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.25rem;">
+                <div>
+                    <label style="display: block; font-size: 0.82rem; font-weight: 700; color: #475569; margin-bottom: 0.35rem;">
+                        Registration Office <span style="color: #ef4444;">*</span>
+                    </label>
+                    <input type="text" name="registration_office" value="{{ req.offline_data.get('office', 'Sub-Registrar Office, Central Registry Zone') }}" required class="form-control" style="width: 100%; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.6rem; font-size: 0.88rem;">
+                </div>
+
+                <div>
+                    <label style="display: block; font-size: 0.82rem; font-weight: 700; color: #475569; margin-bottom: 0.35rem;">
+                        Registration Date <span style="color: #ef4444;">*</span>
+                    </label>
+                    <input type="date" name="registration_date" value="{{ req.offline_data.get('date', current_date_iso or '2026-09-10') }}" required class="form-control" style="width: 100%; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.6rem; font-size: 0.88rem;">
+                </div>
+
+                <div>
+                    <label style="display: block; font-size: 0.82rem; font-weight: 700; color: #475569; margin-bottom: 0.35rem;">
+                        Registering Officer Name <span style="color: #ef4444;">*</span>
+                    </label>
+                    <input type="text" name="officer_name" value="{{ req.offline_data.get('officer_name', current_user.username) }}" required class="form-control" style="width: 100%; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.6rem; font-size: 0.88rem;">
+                </div>
+
+                <div>
+                    <label style="display: block; font-size: 0.82rem; font-weight: 700; color: #475569; margin-bottom: 0.35rem;">
+                        Registering Officer ID <span style="color: #ef4444;">*</span>
+                    </label>
+                    <input type="text" name="officer_id" value="{{ req.offline_data.get('officer_id', current_user.citizen_id or ('RO-' ~ "%04d"|format(current_user.id))) }}" required class="form-control" style="width: 100%; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.6rem; font-size: 0.88rem;">
+                </div>
+            </div>
+
+            <div>
+                <label style="display: block; font-size: 0.82rem; font-weight: 700; color: #475569; margin-bottom: 0.35rem;">
+                    Verification Remarks <span style="color: #ef4444;">*</span>
+                </label>
+                <textarea name="verification_remarks" rows="3" required class="form-control" style="width: 100%; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.6rem; font-size: 0.88rem;">{{ req.offline_data.get('remarks', 'Physical signatures of seller and buyer, identity documents, and original title deeds verified in person at Offline Registration Office.') }}</textarea>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="display: flex; justify-content: flex-end; gap: 1rem; align-items: center;">
+            <a href="{{ url_for('land.transfer_requests') }}" class="btn-action-secondary" style="text-decoration: none; padding: 0.75rem 1.5rem;">
+                Cancel
+            </a>
+            <button type="submit" name="submit_action" value="save_draft" class="btn-action-secondary" style="padding: 0.75rem 1.5rem; background: #2563eb; color: #fff; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem;">
+                <i class="fa-solid fa-floppy-disk"></i> SAVE DRAFT
+            </button>
+            <button type="submit" name="submit_action" value="complete" class="btn-action-primary" style="padding: 0.75rem 2rem; font-size: 1rem; background: #15803d; border-color: #15803d; color: #fff; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem;" onclick="return confirm('Confirm final registration completion and legal title transfer to New Owner?');">
+                <i class="fa-solid fa-check-double"></i> SUBMIT &amp; COMPLETE FINAL REGISTRATION
+            </button>
+        </div>
+
+    </form>
+</div>
+{% endblock %}

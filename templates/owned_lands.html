@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block title %}Land Records & Ownership - Smart Land Registry{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <div class="dashboard-title">
+        <h1>Land Records & Ownership — My Properties</h1>
+    </div>
+</div>
+
+<div class="glass-card">
+    <h2 class="panel-title"><i class="fa-solid fa-house-chimney"></i> My Owned Properties</h2>
+    
+    <div class="table-wrapper" style="overflow-x: auto; width: 100%; border-radius: 8px; border: 1px solid #e2e8f0; margin-top: 1rem;">
+        <table class="custom-table" style="width: 100%; min-width: 1050px; border-collapse: collapse;">
+            <thead>
+                <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+                    <th style="text-align: center; padding: 0.85rem 1rem; width: 70px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase;">S.No.</th>
+                    <th style="text-align: center; padding: 0.85rem 1rem; width: 110px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase;">Area (sq.m.)</th>
+                    <th style="text-align: left; padding: 0.85rem 1rem; width: 130px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase;">City</th>
+                    <th style="text-align: left; padding: 0.85rem 1rem; width: 130px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase;">State</th>
+                    <th style="text-align: right; padding: 0.85rem 1rem; width: 150px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase;">Declared Value</th>
+                    <th style="text-align: center; padding: 0.85rem 1rem; width: 160px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase;">Property PID</th>
+                    <th style="text-align: center; padding: 0.85rem 1rem; width: 150px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase;">Survey Number</th>
+                    <th style="text-align: center; padding: 0.85rem 1rem; width: 150px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase;">AI Security Risk</th>
+                    <th style="text-align: center; padding: 0.85rem 1rem; width: 190px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if lands %}
+                    {% for land in lands %}
+                        <tr style="border-bottom: 1px solid #f1f5f9; transition: background 0.15s ease;" onmouseover="this.style.background='#f8fafc';" onmouseout="this.style.background='transparent';">
+                            <td class="mono" style="text-align: center; padding: 0.85rem 1rem; font-weight: 600; color: #64748b; font-size: 0.82rem;">
+                                {{ loop.index }}
+                            </td>
+                            <td class="mono" style="text-align: center; padding: 0.85rem 1rem; font-size: 0.85rem; font-weight: 600; color: #1e293b;">
+                                {{ land.info.area | int }}
+                            </td>
+                            <td style="text-align: left; padding: 0.85rem 1rem; font-size: 0.85rem; color: #334155; white-space: nowrap;">
+                                {{ land.info.city or (land.info.location.split(',')[0] if land.info.location else 'Bengaluru') }}
+                            </td>
+                            <td style="text-align: left; padding: 0.85rem 1rem; font-size: 0.85rem; color: #334155; white-space: nowrap;">
+                                {{ land.info.state or (land.info.location.split(',')[1] if ',' in (land.info.location or '') else 'Karnataka') }}
+                            </td>
+                            <td class="mono" style="text-align: right; padding: 0.85rem 1rem; font-weight: 700; color: #059669; font-size: 0.88rem;">
+                                {{ land.info.price | currency }}
+                            </td>
+                            <td class="mono" style="text-align: center; padding: 0.85rem 1rem; font-size: 0.82rem; color: #475569; white-space: nowrap;">
+                                {{ land.info.pid or ('PID-KRN-' ~ "%06d"|format(land.info.id)) }}
+                            </td>
+                            <td class="mono" style="text-align: center; padding: 0.85rem 1rem; font-size: 0.85rem; white-space: nowrap;">
+                                <a href="#" onclick="openPropertyDetailsModal({{ land.info.id }}); return false;" style="color: #2563eb; font-weight: 700; text-decoration: underline;" title="Click to view Property Details">
+                                    {{ land.info.survey_number }}
+                                </a>
+                            </td>
+                            <td style="text-align: center; padding: 0.85rem 1rem; white-space: nowrap;">
+                                <span class="status-badge {% if land.risk_level == 'High' %}status-flagged{% elif land.risk_level == 'Medium' %}status-pending{% else %}status-verified{% endif %}" style="font-size: 0.72rem; padding: 0.2rem 0.55rem;">
+                                    {% if land.risk_level == 'High' %}
+                                        <i class="fa-solid fa-triangle-exclamation"></i> High Risk
+                                    {% elif land.risk_level == 'Medium' %}
+                                        <i class="fa-solid fa-triangle-exclamation"></i> Med Risk
+                                    {% else %}
+                                        <i class="fa-solid fa-circle-check"></i> Low Risk
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td style="text-align: center; padding: 0.85rem 1rem; white-space: nowrap;">
+                                <div style="display: flex; gap: 0.4rem; justify-content: center; align-items: center; flex-wrap: wrap;">
+                                    <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.65rem; font-size: 0.75rem;" onclick="openPropertyDetailsModal({{ land.info.id }});">
+                                        <i class="fa-solid fa-circle-info" style="color: #2563eb;"></i> Details
+                                    </button>
+                                    {% if land.info.status in ['approved', 'verified'] %}
+                                        <a href="{{ url_for('land.view_land_certificate', land_id=land.info.id) }}" target="_blank" class="btn btn-secondary" style="padding: 0.3rem 0.65rem; font-size: 0.75rem; text-decoration: none; color: #2563eb; background: #eff6ff; border: 1px solid #bfdbfe;" title="View Official Land Certificate">
+                                            <i class="fa-solid fa-certificate"></i> Certificate
+                                        </a>
+                                        <a href="{{ url_for('land.download_land_certificate', land_id=land.info.id) }}" class="btn btn-secondary" style="padding: 0.3rem 0.65rem; font-size: 0.75rem; text-decoration: none; color: #059669; background: #ecfdf5; border: 1px solid #a7f3d0;" title="Download PDF Land Certificate">
+                                            <i class="fa-solid fa-file-pdf"></i> PDF
+                                        </a>
+                                    {% endif %}
+                                    <a href="{{ url_for('land.transfer_land', land_id=land.info.id) }}" class="btn btn-primary" style="padding: 0.3rem 0.65rem; font-size: 0.75rem; text-decoration: none;">
+                                        <i class="fa-solid fa-right-left"></i> Transfer
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="9" style="text-align: center; color: var(--text-secondary); padding: 3rem 0;">
+                            <i class="fa-solid fa-building-circle-exclamation" style="font-size: 3rem; color: var(--text-dim); margin-bottom: 1rem; display: block;"></i>
+                            No properties currently registered under your ownership.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+    {% include 'components/pagination.html' %}
+</div>
+{% endblock %}
+

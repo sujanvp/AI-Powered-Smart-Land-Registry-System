@@ -1,0 +1,268 @@
+{% extends 'base.html' %}
+
+{% block title %}Initiate Land Transfer - Smart Land Registry{% endblock %}
+
+{% block content %}
+<div style="max-width: 1100px; margin: 0 auto; padding-bottom: 2.5rem;">
+
+    <!-- Page Header (Simple & Professional) -->
+    <div class="dashboard-header" style="margin-bottom: 1.5rem;">
+        <div class="dashboard-title">
+            <h1 style="display: flex; align-items: center; gap: 0.65rem; font-size: 1.6rem; color: #0f172a; margin: 0;">
+                <i class="fa-solid fa-right-left" style="color: #2563eb;"></i> Land Transfer Request Form
+            </h1>
+        </div>
+    </div>
+
+    <!-- Main Transfer Request Form -->
+    <form action="{{ url_for('land.transfer_land', land_id=land.id) }}" method="POST" enctype="multipart/form-data">
+        
+        <!-- TOP SECTION: TRANSFER IDENTIFICATION (5 EQUAL COLUMNS) -->
+        <div class="glass-card" style="padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+            <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 1rem; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.6rem;">
+                <i class="fa-solid fa-id-card-clip" style="color: #2563eb; font-size: 1.1rem;"></i>
+                <h2 class="panel-title" style="margin: 0; font-size: 0.95rem; color: #0f172a; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em;">
+                    Transfer Identification
+                </h2>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 1rem; align-items: start;">
+                <!-- Column 1: Transfer Ref -->
+                <div>
+                    <label style="font-size: 0.78rem; font-weight: 700; color: #64748b; margin-bottom: 0.35rem; display: block; text-transform: uppercase; letter-spacing: 0.02em;">
+                        Transfer Ref
+                    </label>
+                    <input type="text" class="form-control mono" value="{{ transfer_ref or ('TRF-2026-' ~ "%04d"|format(land.id)) }}" readonly disabled style="background: #f1f5f9; font-weight: 700; color: #2563eb; height: 42px; width: 100%; border: 1px solid #cbd5e1; border-radius: 6px; text-align: center;">
+                </div>
+
+                <!-- Column 2: Survey Number -->
+                <div>
+                    <label style="font-size: 0.78rem; font-weight: 700; color: #64748b; margin-bottom: 0.35rem; display: block; text-transform: uppercase; letter-spacing: 0.02em;">
+                        Survey Number
+                    </label>
+                    <input type="text" class="form-control mono" value="{{ land.survey_number }}" readonly disabled style="background: #f1f5f9; font-weight: 700; color: #1e3a8a; height: 42px; width: 100%; border: 1px solid #cbd5e1; border-radius: 6px; text-align: center;">
+                </div>
+
+                <!-- Column 3: Property PID -->
+                <div>
+                    <label style="font-size: 0.78rem; font-weight: 700; color: #64748b; margin-bottom: 0.35rem; display: block; text-transform: uppercase; letter-spacing: 0.02em;">
+                        Property PID
+                    </label>
+                    <input type="text" class="form-control mono" value="{{ land.pid or ('PID-KRN-' ~ "%06d"|format(land.id)) }}" readonly disabled style="background: #f1f5f9; font-weight: 700; color: #475569; height: 42px; width: 100%; border: 1px solid #cbd5e1; border-radius: 6px; text-align: center;">
+                </div>
+
+                <!-- Column 4: Current Owner -->
+                <div>
+                    <label style="font-size: 0.78rem; font-weight: 700; color: #64748b; margin-bottom: 0.35rem; display: block; text-transform: uppercase; letter-spacing: 0.02em;">
+                        Current Owner
+                    </label>
+                    <input type="text" class="form-control" value="{{ current_user.username }}" readonly disabled style="background: #f1f5f9; font-weight: 600; color: #1e293b; height: 42px; width: 100%; border: 1px solid #cbd5e1; border-radius: 6px; text-align: center;">
+                </div>
+
+                <!-- Column 5: New Owner -->
+                <div>
+                    <label style="font-size: 0.78rem; font-weight: 700; color: #64748b; margin-bottom: 0.35rem; display: block; text-transform: uppercase; letter-spacing: 0.02em;">
+                        New Owner
+                    </label>
+                    <input type="text" id="buyer_name_preview" class="form-control" readonly disabled style="background: #f8fafc; font-weight: 700; color: #059669; height: 42px; width: 100%; border: 1px solid #cbd5e1; border-radius: 6px; text-align: center;">
+                </div>
+            </div>
+        </div>
+
+        <!-- 2-COLUMN RESPONSIVE SECTION GRID -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(480px, 1fr)); gap: 1.5rem;">
+
+            <!-- SECTION 1: PROPERTY INFORMATION -->
+            <div class="glass-card" style="padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 1.25rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.75rem;">
+                        <i class="fa-solid fa-landmark" style="color: #2563eb; font-size: 1.15rem;"></i>
+                        <h2 class="panel-title" style="margin: 0; font-size: 1.05rem; color: #1e293b; font-weight: 700;">Section 1 – Property Details</h2>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <div>
+                            <label style="font-size: 0.82rem; font-weight: 700; color: #475569; margin-bottom: 0.35rem; display: block;">Area</label>
+                            <input type="text" class="form-control mono" value="{{ land.area | int }} sq.m." readonly disabled style="background: #f8fafc; font-weight: 600; color: #334155; height: 42px;">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.82rem; font-weight: 700; color: #475569; margin-bottom: 0.35rem; display: block;">Location / City</label>
+                            <input type="text" class="form-control" value="{{ land.city or (land.location.split(',')[0] if land.location else 'Bengaluru') }}" readonly disabled style="background: #f8fafc; font-weight: 600; color: #334155; height: 42px;">
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div>
+                            <label style="font-size: 0.82rem; font-weight: 700; color: #475569; margin-bottom: 0.35rem; display: block;">State</label>
+                            <input type="text" class="form-control" value="{{ land.state or (land.location.split(',')[1] if ',' in (land.location or '') else 'Karnataka') }}" readonly disabled style="background: #f8fafc; font-weight: 600; color: #334155; height: 42px;">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.82rem; font-weight: 700; color: #475569; margin-bottom: 0.35rem; display: block;">Declared Property Value</label>
+                            <input type="text" class="form-control mono" value="{{ land.price | currency }}" readonly disabled style="background: #f8fafc; font-weight: 700; color: #059669; height: 42px;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 2: NEW OWNER INFORMATION -->
+            <div class="glass-card" style="padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 1.25rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.75rem;">
+                        <i class="fa-solid fa-user-plus" style="color: #059669; font-size: 1.15rem;"></i>
+                        <h2 class="panel-title" style="margin: 0; font-size: 1.05rem; color: #1e293b; font-weight: 700;">Section 2 – New Owner Information</h2>
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label for="buyer_citizen_id" style="font-size: 0.82rem; font-weight: 700; color: #1e293b; margin-bottom: 0.35rem; display: block;">
+                            New Owner Citizen ID <span style="color: #ef4444;">*</span>
+                        </label>
+                        <input type="text" id="buyer_citizen_id" name="buyer_citizen_id" class="form-control mono" required oninput="lookupCitizenId(this.value)" style="height: 42px; font-weight: 600;">
+                        <span id="citizen_id_status" style="font-size: 0.78rem; margin-top: 0.35rem; display: block; font-weight: 600; min-height: 1.2rem;"></span>
+                    </div>
+
+                    <div>
+                        <label style="font-size: 0.82rem; font-weight: 700; color: #475569; margin-bottom: 0.35rem; display: block;">New Owner Email</label>
+                        <input type="text" id="buyer_email_preview" class="form-control mono" readonly disabled style="background: #f8fafc; font-weight: 500; color: #475569; height: 42px;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 3: TRANSFER INFORMATION -->
+            <div class="glass-card" style="padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 1.25rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.75rem;">
+                        <i class="fa-solid fa-file-invoice-dollar" style="color: #d97706; font-size: 1.15rem;"></i>
+                        <h2 class="panel-title" style="margin: 0; font-size: 1.05rem; color: #1e293b; font-weight: 700;">Section 3 – Transfer Information</h2>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <div>
+                            <label for="transfer_reason" style="font-size: 0.82rem; font-weight: 700; color: #1e293b; margin-bottom: 0.35rem; display: block;">
+                                Transfer Reason <span style="color: #ef4444;">*</span>
+                            </label>
+                            <select id="transfer_reason" name="transfer_reason" class="form-control" required style="height: 42px; font-weight: 600;">
+                                <option value="Sale">Sale (Property Purchase / Deed Transfer)</option>
+                                <option value="Gift">Gift (Family Settlement / Gift Deed)</option>
+                                <option value="Inheritance">Inheritance (Legal Succession / Estate Transfer)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="declared_price" style="font-size: 0.82rem; font-weight: 700; color: #1e293b; margin-bottom: 0.35rem; display: block;">
+                                Declared Transfer Value (₹) <span style="color: #ef4444;">*</span>
+                            </label>
+                            <input type="number" id="declared_price" name="declared_price" class="form-control mono" value="{{ land.price | int }}" step="1000" min="0" required style="height: 42px; font-weight: 700; color: #059669;">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="transfer_document" style="font-size: 0.82rem; font-weight: 700; color: #1e293b; margin-bottom: 0.35rem; display: block;">
+                            Transfer Document (Deed / Agreement) <span style="color: #ef4444;">*</span>
+                        </label>
+                        <input type="file" id="transfer_document" name="transfer_document" class="form-control" accept=".pdf,.png,.jpg,.jpeg" required style="height: 42px; padding: 0.4rem;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 4: VERIFICATION STATUS -->
+            <div class="glass-card" style="padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 1.25rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.75rem;">
+                        <i class="fa-solid fa-shield-check" style="color: #7c3aed; font-size: 1.15rem;"></i>
+                        <h2 class="panel-title" style="margin: 0; font-size: 1.05rem; color: #1e293b; font-weight: 700;">Section 4 – Verification Status</h2>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 0.85rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid #e2e8f0; height: 42px;">
+                            <span style="font-size: 0.85rem; font-weight: 600; color: #475569;">
+                                <i class="fa-solid fa-file-contract" style="color: #2563eb; margin-right: 0.4rem;"></i> OCR Verification Status
+                            </span>
+                            <span class="status-badge status-verified" style="font-size: 0.75rem; padding: 0.25rem 0.65rem;">
+                                <i class="fa-solid fa-circle-check"></i> {{ ocr_status or 'APPROVED' }}
+                            </span>
+                        </div>
+
+                        <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid #e2e8f0; height: 42px;">
+                            <span style="font-size: 0.85rem; font-weight: 600; color: #475569;">
+                                <i class="fa-solid fa-microchip" style="color: #7c3aed; margin-right: 0.4rem;"></i> AI Fraud Detection Status
+                            </span>
+                            <span class="status-badge status-verified" style="font-size: 0.75rem; padding: 0.25rem 0.65rem;">
+                                <i class="fa-solid fa-shield-cat"></i> {{ fraud_status or 'CLEARED' }}
+                            </span>
+                        </div>
+
+                        <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid #e2e8f0; height: 42px;">
+                            <span style="font-size: 0.85rem; font-weight: 600; color: #475569;">
+                                <i class="fa-solid fa-shield-virus" style="color: #059669; margin-right: 0.4rem;"></i> AI Security Risk
+                            </span>
+                            <span class="status-badge {% if risk_level == 'High' %}status-flagged{% elif risk_level == 'Medium' %}status-pending{% else %}status-verified{% endif %}" style="font-size: 0.75rem; padding: 0.25rem 0.65rem;">
+                                {{ risk_level or 'Low' }} Risk (Score: {{ risk_score or 5 }}%)
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Bottom Action Bar (Only Cancel and Submit Transfer Request) -->
+        <div style="display: flex; gap: 1rem; justify-content: flex-end; align-items: center; margin-top: 1.75rem; padding-top: 1rem; border-top: 1px solid #e2e8f0;">
+            <a href="{{ url_for('land.owned_lands') }}" class="btn btn-secondary" style="padding: 0.65rem 1.5rem; font-weight: 600;">
+                Cancel
+            </a>
+            <button type="submit" id="submit_btn" class="btn btn-primary" style="padding: 0.65rem 2rem; font-size: 0.95rem; font-weight: 700; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.25);">
+                <i class="fa-solid fa-paper-plane"></i> Submit Transfer Request
+            </button>
+        </div>
+
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let lookupTimeout = null;
+
+function lookupCitizenId(query) {
+    clearTimeout(lookupTimeout);
+    const statusElem = document.getElementById('citizen_id_status');
+    const nameElem = document.getElementById('buyer_name_preview');
+    const emailElem = document.getElementById('buyer_email_preview');
+    const submitBtn = document.getElementById('submit_btn');
+
+    const trimmed = query.trim();
+    if (!trimmed || trimmed.length < 3) {
+        statusElem.innerHTML = '';
+        nameElem.value = '';
+        emailElem.value = '';
+        submitBtn.disabled = false;
+        return;
+    }
+
+    statusElem.style.color = '#64748b';
+    statusElem.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Checking registry...';
+
+    lookupTimeout = setTimeout(() => {
+        fetch(`/api/citizen-info/${encodeURIComponent(trimmed)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    nameElem.value = data.name;
+                    emailElem.value = data.email;
+                    statusElem.style.color = '#059669';
+                    statusElem.innerHTML = `<i class="fa-solid fa-circle-check"></i> Citizen Verified: ${data.name} (${data.citizen_id})`;
+                    submitBtn.disabled = false;
+                } else {
+                    nameElem.value = '';
+                    emailElem.value = '';
+                    statusElem.style.color = '#ef4444';
+                    statusElem.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> ${data.message || 'Citizen ID not found.'}`;
+                }
+            })
+            .catch(err => {
+                statusElem.style.color = '#ef4444';
+                statusElem.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Error querying registry database.';
+            });
+    }, 250);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block title %}Land Records & Ownership - History - Smart Land Registry{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <div class="dashboard-title">
+        <h1>Land Records & Ownership — History</h1>
+    </div>
+</div>
+
+<div class="glass-card">
+    <h2 class="panel-title"><i class="fa-solid fa-timeline"></i> Registry Ownership Chain Records</h2>
+    
+    <div class="table-wrapper" style="overflow-x: auto; width: 100%; border-radius: 8px; border: 1px solid #e2e8f0; margin-top: 1rem;">
+        <table class="custom-table" style="width: 100%; min-width: 1100px; border-collapse: collapse;">
+            <thead>
+                <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+                    <th style="text-align: center; padding: 0.85rem 1rem; width: 110px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase;">Ref #</th>
+                    <th style="text-align: left; padding: 0.85rem 1rem; width: 150px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase;">Survey Number</th>
+                    <th style="text-align: left; padding: 0.85rem 1rem; width: 160px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase;">Location / City</th>
+                    <th style="text-align: left; padding: 0.85rem 1rem; width: 180px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase;">Previous Owner</th>
+                    <th style="text-align: left; padding: 0.85rem 1rem; width: 180px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase;">New Registered Owner</th>
+                    <th style="text-align: right; padding: 0.85rem 1rem; width: 150px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase;">Valuation Amount</th>
+                    <th style="text-align: center; padding: 0.85rem 1rem; width: 170px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase;">Transfer Date</th>
+                    <th style="text-align: center; padding: 0.85rem 1rem; width: 150px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase;">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if history_records %}
+                    {% for h in history_records %}
+                        <tr style="border-bottom: 1px solid #f1f5f9; transition: background 0.15s ease;" onmouseover="this.style.background='#f8fafc';" onmouseout="this.style.background='transparent';">
+                            <!-- Ref # (Center) -->
+                            <td class="mono" style="text-align: center; padding: 0.85rem 1rem; font-weight: 700; color: #2563eb; font-size: 0.82rem;">
+                                {{ h.transfer_ref or ('REG-' ~ "%04d"|format(h.id)) }}
+                            </td>
+
+                            <!-- Survey Number (Left) -->
+                            <td class="mono" style="text-align: left; padding: 0.85rem 1rem; font-size: 0.85rem;">
+                                {% if h.land %}
+                                    {% set s_num = h.land.survey_number[1:] if h.land.survey_number.startswith('#') else h.land.survey_number %}
+                                    <a href="#" onclick="openOwnershipChainModal({{ h.land.id }}); return false;" style="color: #1e3a8a; font-weight: 700; text-decoration: underline;" title="Click to view Ownership History Details">
+                                        {{ s_num }}
+                                    </a>
+                                {% else %}
+                                    <span style="color: #1e3a8a; font-weight: 700;">SY-BLR-{{ "%06d"|format(h.land_id) }}</span>
+                                {% endif %}
+                            </td>
+
+                            <!-- Location / City (Left) -->
+                            <td style="text-align: left; padding: 0.85rem 1rem; font-size: 0.85rem; color: #334155; white-space: nowrap;">
+                                {% if h.land %}
+                                    {{ h.land.city ~ (', ' ~ h.land.state if h.land.state else '') if h.land.city else (h.land.location or 'Bengaluru, Karnataka') }}
+                                {% else %}
+                                    Bengaluru, Karnataka
+                                {% endif %}
+                            </td>
+
+                            <!-- Previous Owner (Left) -->
+                            <td style="text-align: left; padding: 0.85rem 1rem; font-size: 0.85rem;">
+                                {% if h.previous_owner %}
+                                    <strong style="color: #475569;">{{ h.previous_owner.username }}</strong>
+                                    <div style="font-size: 0.72rem; color: #64748b;" class="mono">{{ h.previous_owner.citizen_id or '' }}</div>
+                                {% else %}
+                                    <span class="status-badge status-verified" style="font-size: 0.72rem; padding: 0.15rem 0.45rem;"><i class="fa-solid fa-flag"></i> Initial Registration</span>
+                                {% endif %}
+                            </td>
+
+                            <!-- New Registered Owner (Left) -->
+                            <td style="text-align: left; padding: 0.85rem 1rem; font-size: 0.85rem;">
+                                {% set new_name = h.new_owner.username if h.new_owner else (h.land.owner.username if (h.land and h.land.owner) else 'Registry Owner') %}
+                                {% set new_cid = h.new_owner.citizen_id if (h.new_owner and h.new_owner.citizen_id) else (h.land.owner.citizen_id if (h.land and h.land.owner and h.land.owner.citizen_id) else '') %}
+                                <strong style="color: #059669;">{{ new_name }}</strong>
+                                {% if new_cid %}<div style="font-size: 0.72rem; color: #059669;" class="mono">{{ new_cid }}</div>{% endif %}
+                            </td>
+
+                            <!-- Valuation Amount (Right, Currency) -->
+                            <td class="mono" style="text-align: right; padding: 0.85rem 1rem; font-weight: 700; color: #0f172a; font-size: 0.88rem;">
+                                {{ (h.transfer_price or (h.land.price if h.land else 125000.0)) | currency }}
+                            </td>
+
+                            <!-- Transfer Date (Center) -->
+                            <td style="text-align: center; padding: 0.85rem 1rem; font-size: 0.78rem; color: #475569; white-space: nowrap;">
+                                {{ h.transfer_date.strftime('%d %b %Y, %I:%M %p') if h.transfer_date else (h.land.created_at.strftime('%d %b %Y, %I:%M %p') if (h.land and h.land.created_at) else '29 Jul 2026, 05:44 PM') }}
+                            </td>
+
+                            <!-- Status (Center) -->
+                            <td style="text-align: center; padding: 0.85rem 1rem; white-space: nowrap;">
+                                <span class="status-badge status-verified" style="font-size: 0.72rem; padding: 0.2rem 0.55rem;"><i class="fa-solid fa-circle-check"></i> RECORDED IN MYSQL</span>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="8" style="text-align: center; color: var(--text-secondary); padding: 3rem 0;">
+                            <i class="fa-solid fa-folder-open" style="font-size: 3rem; color: var(--text-dim); margin-bottom: 1rem; display: block;"></i>
+                            No ownership history logs recorded yet in MySQL registry.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+    {% include 'components/pagination.html' %}
+</div>
+{% endblock %}
+
+

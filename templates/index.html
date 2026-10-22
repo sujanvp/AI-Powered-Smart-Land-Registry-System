@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block title %}Welcome - AI-Powered Smart Land Registry System{% endblock %}
+
+{% block content %}
+<div class="hero-photo3-wrapper">
+    <!-- Top-Right Citizen Login Button -->
+    <div class="home-top-bar">
+        <a href="{{ url_for('auth.login') }}" class="home-top-login-btn">
+            <i class="fa-solid fa-right-to-bracket"></i>
+            <span>Citizen Login</span>
+        </a>
+    </div>
+
+    <div class="hero-photo3-content">
+        <h1 class="hero-photo3-title">
+            <span class="blue-text">AI-Powered Smart</span><br>
+            <span class="dark-text">Land Registry System</span>
+        </h1>
+        
+        <div class="hero-photo3-buttons" style="margin-top: 2.5rem;">
+            <a href="{{ url_for('auth.login') }}" class="btn-photo3-primary">
+                <i class="fa-solid fa-building-columns"></i>
+                <span>Enter Registry</span>
+            </a>
+            <a href="{{ url_for('auth.register') }}" class="btn-photo3-primary" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);">
+                <i class="fa-solid fa-user-plus"></i>
+                <span>Create Account</span>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+
+

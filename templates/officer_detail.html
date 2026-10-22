@@ -1,0 +1,257 @@
+{% extends 'base.html' %}
+
+{% block title %}Revenue Officer Details - {{ officer.citizen_id }}{% endblock %}
+
+{% block content %}
+<div style="max-width: 950px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.75rem;">
+
+    <!-- Top Navigation / Back Button Row -->
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <div style="font-size: 0.75rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1px;">
+                DEPARTMENT OF REVENUE & LAND RECORDS
+            </div>
+            <h1 style="font-size: 1.75rem; font-weight: 800; color: #1e3a8a; margin-top: 0.15rem; display: flex; align-items: center; gap: 0.6rem;">
+                <i class="fa-solid fa-user-shield" style="color: #2563eb;"></i> Revenue Officer Details
+            </h1>
+        </div>
+        <div>
+            <a href="{{ url_for('admin.officer_approvals') }}" class="btn-action-secondary" style="padding: 0.55rem 1.1rem; font-weight: 600; font-size: 0.88rem; display: inline-flex; align-items: center; gap: 0.4rem;">
+                <i class="fa-solid fa-arrow-left"></i> Back to Officer List
+            </a>
+        </div>
+    </div>
+
+    <!-- Registration Status Header Banner -->
+    <div class="glass-card" style="border-left: 5px solid {% if reg_status_label == 'Approved' %}#10b981{% elif reg_status_label == 'Rejected' %}#ef4444{% else %}#f59e0b{% endif %}; background: #ffffff;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <div style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Registration Status</div>
+                <div style="font-size: 1.4rem; font-weight: 800; margin-top: 0.15rem; color: {% if reg_status_label == 'Approved' %}#059669{% elif reg_status_label == 'Rejected' %}#dc2626{% else %}#d97706{% endif %};">
+                    {{ reg_status_label }}
+                </div>
+            </div>
+            <div>
+                {% if reg_status_label == 'Approved' %}
+                    <span class="status-badge status-verified" style="font-size: 0.9rem; padding: 0.45rem 1.1rem;">
+                        <i class="fa-solid fa-circle-check"></i> APPROVED & ACTIVE
+                    </span>
+                {% elif reg_status_label == 'Rejected' %}
+                    <span class="status-badge status-flagged" style="font-size: 0.9rem; padding: 0.45rem 1.1rem;">
+                        <i class="fa-solid fa-circle-xmark"></i> REJECTED / INACTIVE
+                    </span>
+                {% else %}
+                    <span class="status-badge status-pending" style="font-size: 0.9rem; padding: 0.45rem 1.1rem;">
+                        <i class="fa-solid fa-hourglass-half"></i> PENDING ADMIN VERIFICATION
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Rejection Info Box (If Officer is Rejected) -->
+    {% if reg_status_label == 'Rejected' %}
+        <div class="glass-card" style="border: 1px solid #fca5a5; background: #fff5f5;">
+            <h2 class="panel-title" style="color: #991b1b; margin-bottom: 0.75rem;">
+                <i class="fa-solid fa-triangle-exclamation"></i> Officer Rejection Record
+            </h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; font-size: 0.88rem; background: #ffffff; padding: 1rem; border-radius: 8px; border: 1px solid #fee2e2;">
+                <div>
+                    <span style="font-weight: 700; color: #7f1d1d;">Rejection Reason:</span><br>
+                    <span style="color: #991b1b; font-weight: 600;">{{ officer.rejection_reason or 'Official credentials unverified during background audit.' }}</span>
+                </div>
+                <div>
+                    <span style="font-weight: 700; color: #7f1d1d;">Rejected By:</span><br>
+                    <span style="color: #334155;">System Administrator</span>
+                </div>
+                <div>
+                    <span style="font-weight: 700; color: #7f1d1d;">Rejection Date:</span><br>
+                    <span class="mono" style="color: #334155;">{{ officer.created_at.strftime('%Y-%m-%d %H:%M') if officer.created_at else 'N/A' }}</span>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- 1. OFFICER CREDENTIALS & PERSONAL INFO -->
+    <div class="section-card" style="margin: 0;">
+        <div class="card-header-row" style="border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem; margin-bottom: 1.25rem;">
+            <h3 style="color: #1e3a8a; font-size: 1.1rem; font-weight: 800;">
+                <i class="fa-solid fa-address-card" style="color: #2563eb;"></i> 1. Officer Credentials & Personal Info
+            </h3>
+        </div>
+        <div class="prop-info-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; font-size: 0.9rem;">
+            <div class="prop-info-row" style="display: flex; justify-content: space-between; padding: 0.6rem 0; border-bottom: 1px dashed #e2e8f0;">
+                <span class="prop-info-label" style="color: #64748b; font-weight: 600;">Full Name:</span>
+                <span class="prop-info-value" style="font-weight: 700; color: #1e293b;">{{ officer.username }}</span>
+            </div>
+            <div class="prop-info-row" style="display: flex; justify-content: space-between; padding: 0.6rem 0; border-bottom: 1px dashed #e2e8f0;">
+                <span class="prop-info-label" style="color: #64748b; font-weight: 600;">Official Email ID:</span>
+                <span class="prop-info-value" style="font-weight: 700; color: #1e3a8a;">{{ officer.email }}</span>
+            </div>
+            <div class="prop-info-row" style="display: flex; justify-content: space-between; padding: 0.6rem 0; border-bottom: 1px dashed #e2e8f0;">
+                <span class="prop-info-label" style="color: #64748b; font-weight: 600;">Mobile Number:</span>
+                <span class="prop-info-value mono" style="font-weight: 700; color: #1e293b;">{{ officer.aadhar or '+91 98765 43210' }}</span>
+            </div>
+            <div class="prop-info-row" style="display: flex; justify-content: space-between; padding: 0.6rem 0; border-bottom: 1px dashed #e2e8f0;">
+                <span class="prop-info-label" style="color: #64748b; font-weight: 600;">Employee / Officer ID:</span>
+                <span class="prop-info-value mono font-bold" style="color: #1e3a8a;">{{ officer.citizen_id }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. DEPARTMENT & OFFICE POSTING -->
+    <div class="section-card" style="margin: 0;">
+        <div class="card-header-row" style="border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem; margin-bottom: 1.25rem;">
+            <h3 style="color: #1e3a8a; font-size: 1.1rem; font-weight: 800;">
+                <i class="fa-solid fa-building-user" style="color: #2563eb;"></i> 2. Department & Office Posting
+            </h3>
+        </div>
+        <div class="prop-info-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; font-size: 0.9rem;">
+            <div class="prop-info-row" style="display: flex; justify-content: space-between; padding: 0.6rem 0; border-bottom: 1px dashed #e2e8f0;">
+                <span class="prop-info-label" style="color: #64748b; font-weight: 600;">Department:</span>
+                <span class="prop-info-value" style="font-weight: 700; color: #1e293b;">Department of Revenue & Land Records</span>
+            </div>
+            <div class="prop-info-row" style="display: flex; justify-content: space-between; padding: 0.6rem 0; border-bottom: 1px dashed #e2e8f0;">
+                <span class="prop-info-label" style="color: #64748b; font-weight: 600;">Designation:</span>
+                <span class="prop-info-value" style="font-weight: 700; color: #1e293b;">Sub-Registrar / Revenue Officer</span>
+            </div>
+            <div class="prop-info-row" style="display: flex; justify-content: space-between; padding: 0.6rem 0; border-bottom: 1px dashed #e2e8f0;">
+                <span class="prop-info-label" style="color: #64748b; font-weight: 600;">District:</span>
+                <span class="prop-info-value" style="font-weight: 700; color: #1e293b;">{{ officer.city or 'Bengaluru Urban' }}</span>
+            </div>
+            <div class="prop-info-row" style="display: flex; justify-content: space-between; padding: 0.6rem 0; border-bottom: 1px dashed #e2e8f0;">
+                <span class="prop-info-label" style="color: #64748b; font-weight: 600;">Taluk:</span>
+                <span class="prop-info-value" style="font-weight: 700; color: #1e293b;">{{ officer.state or 'Bengaluru South' }}</span>
+            </div>
+            <div class="prop-info-row" style="display: flex; justify-content: space-between; padding: 0.6rem 0; border-bottom: 1px dashed #e2e8f0;">
+                <span class="prop-info-label" style="color: #64748b; font-weight: 600;">Office Name:</span>
+                <span class="prop-info-value" style="font-weight: 700; color: #1e293b;">District Sub-Registrar Office</span>
+            </div>
+            <div class="prop-info-row" style="display: flex; justify-content: space-between; padding: 0.6rem 0; border-bottom: 1px dashed #e2e8f0;">
+                <span class="prop-info-label" style="color: #64748b; font-weight: 600;">Office Address:</span>
+                <span class="prop-info-value" style="font-weight: 700; color: #1e293b;">Civil Station Complex, Block B</span>
+            </div>
+            <div class="prop-info-row" style="display: flex; justify-content: space-between; padding: 0.6rem 0; border-bottom: 1px dashed #e2e8f0; grid-column: span 2;">
+                <span class="prop-info-label" style="color: #64748b; font-weight: 600;">Date of Joining:</span>
+                <span class="prop-info-value mono" style="font-weight: 700; color: #1e293b;">2024-04-01</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. SECURITY & OFFICIAL ID VERIFICATION -->
+    <div class="section-card" style="margin: 0;">
+        <div class="card-header-row" style="border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem; margin-bottom: 1.25rem;">
+            <h3 style="color: #1e3a8a; font-size: 1.1rem; font-weight: 800;">
+                <i class="fa-solid fa-shield-halved" style="color: #2563eb;"></i> 3. Security & Official ID Verification
+            </h3>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.25rem; align-items: center;">
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem;">
+                <div style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Official ID / Verification Document</div>
+                <div style="font-weight: 700; color: #1e3a8a; font-size: 0.95rem; margin-top: 0.35rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fa-solid fa-file-pdf" style="color: #dc2626; font-size: 1.2rem;"></i>
+                    <span>Official_Revenue_Officer_Credential.pdf</span>
+                </div>
+            </div>
+
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem;">
+                <div style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 0.35rem;">Document Verification Status</div>
+                <div>
+                    {% if officer.is_verified %}
+                        <span class="status-badge status-verified" style="font-size: 0.8rem; padding: 0.3rem 0.75rem;">
+                            <i class="fa-solid fa-check-double"></i> Verified (OCR Hash Matched)
+                        </span>
+                    {% else %}
+                        <span class="status-badge status-pending" style="font-size: 0.8rem; padding: 0.3rem 0.75rem;">
+                            <i class="fa-solid fa-clock"></i> Pending Verification
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div>
+                <button onclick="alert('Viewing Official ID Document:\nOfficer ID: {{ officer.citizen_id }}\nName: {{ officer.username }}\nStatus: {{ reg_status_label }}')" class="btn-action-primary" style="width: 100%; justify-content: center; padding: 0.65rem; font-size: 0.88rem; font-weight: 700; color: #fff; background: #2563eb; border-color: #1d4ed8; cursor: pointer;">
+                    <i class="fa-solid fa-eye" style="margin-right: 0.4rem;"></i> View Verification Document
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. ACCOUNT STATUS & ADMIN ACTIONS -->
+    <div class="section-card" style="margin: 0;">
+        <div class="card-header-row" style="border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem; margin-bottom: 1.25rem;">
+            <h3 style="color: #1e3a8a; font-size: 1.1rem; font-weight: 800;">
+                <i class="fa-solid fa-user-gear" style="color: #2563eb;"></i> 4. Account Status & Admin Actions
+            </h3>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; background: #f8fafc; padding: 1rem; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.88rem; margin-bottom: 1.5rem;">
+            <div>
+                <span style="color: #64748b; font-weight: 600;">Registration Status:</span><br>
+                <strong style="color: #1e293b;">{{ reg_status_label }}</strong>
+            </div>
+            <div>
+                <span style="color: #64748b; font-weight: 600;">Admin Approval Status:</span><br>
+                <strong style="color: {% if officer.is_verified %}#059669{% else %}#d97706{% endif %};">
+                    {% if officer.is_verified %}Approved & Active{% else %}Pending / Rejected{% endif %}
+                </strong>
+            </div>
+            <div>
+                <span style="color: #64748b; font-weight: 600;">Registration Date:</span><br>
+                <strong class="mono" style="color: #1e293b;">{{ officer.created_at.strftime('%Y-%m-%d %H:%M') if officer.created_at else 'N/A' }}</strong>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="display: flex; gap: 1rem; align-items: flex-start; flex-wrap: wrap;">
+            {% if officer.status != 'approved' %}
+                <form action="{{ url_for('admin.approve_officer', user_id=officer.id) }}" method="POST" style="margin: 0;">
+                    <button type="submit" class="btn-action-primary" style="padding: 0.65rem 1.5rem; font-size: 0.9rem; font-weight: 700; background: #16a34a; border-color: #15803d; color: #fff; cursor: pointer;">
+                        <i class="fa-solid fa-circle-check"></i> Approve Officer
+                    </button>
+                </form>
+            {% endif %}
+
+            {% if officer.status != 'rejected' %}
+                <button onclick="toggleRejectionBox('rej-box-detail')" class="btn-action-secondary" style="padding: 0.65rem 1.5rem; font-size: 0.9rem; font-weight: 700; color: #dc2626; border-color: #fca5a5; background: #fee2e2; cursor: pointer;">
+                    <i class="fa-solid fa-circle-xmark"></i> Reject Officer...
+                </button>
+            {% endif %}
+
+            <a href="{{ url_for('admin.officer_approvals') }}" class="btn-action-secondary" style="padding: 0.65rem 1.25rem; font-size: 0.9rem; font-weight: 600; text-decoration: none;">
+                <i class="fa-solid fa-arrow-left"></i> Back to Officer List
+            </a>
+        </div>
+
+        <!-- Rejection Input Box -->
+        <div id="rej-box-detail" style="display: none; margin-top: 1.25rem; background: #fff5f5; border: 1px solid #fca5a5; border-radius: 8px; padding: 1.1rem;">
+            <form action="{{ url_for('admin.reject_officer', user_id=officer.id) }}" method="POST">
+                <label style="font-size: 0.85rem; font-weight: 700; color: #991b1b; display: block; margin-bottom: 0.35rem;">
+                    Rejection Reason / Notes <span style="color: #ef4444;">*</span>
+                </label>
+                <textarea name="rejection_reason" class="gov-input" rows="3" required style="width: 100%; padding: 0.55rem; font-size: 0.88rem; border: 1px solid #fca5a5; border-radius: 6px; margin-bottom: 0.75rem;"></textarea>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button type="submit" class="btn-action-primary" style="padding: 0.5rem 1.25rem; font-size: 0.85rem; background: #dc2626; border-color: #b91c1c; color: #fff; cursor: pointer;">
+                        Confirm Rejection
+                    </button>
+                    <button type="button" onclick="toggleRejectionBox('rej-box-detail')" class="btn-action-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem; cursor: pointer;">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function toggleRejectionBox(boxId) {
+        const box = document.getElementById(boxId);
+        if (box) {
+            box.style.display = (box.style.display === 'none' || box.style.display === '') ? 'block' : 'none';
+        }
+    }
+</script>
+{% endblock %}

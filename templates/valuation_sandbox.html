@@ -1,0 +1,513 @@
+{% extends 'base.html' %}
+
+{% block title %}Property Price Prediction - Smart Land Registry{% endblock %}
+
+{% block content %}
+<!-- Leaflet CSS & JS for Interactive Map -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<div class="page-header">
+    <div class="header-left">
+        <h1>Property Price Prediction</h1>
+    </div>
+</div>
+
+<div class="metrics-grid" style="grid-template-columns: 1.15fr 0.85fr; gap: 2rem; align-items: flex-start;">
+    
+    <!-- Left Column: Location Selection, Map, & Property Attributes -->
+    <div class="section-card" style="margin: 0; padding: 1.5rem;">
+        <div class="card-header-row" style="border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem; margin-bottom: 1.25rem;">
+            <h3 style="color: #1e3a8a; font-size: 1.2rem;"><i class="fa-solid fa-map-location-dot"></i> Property Location & Parameters</h3>
+        </div>
+        
+        <form action="{{ url_for('prediction.query_valuation') }}" method="POST" id="valuationForm">
+            
+            <!-- Location Cascading Dropdowns (All States & UTs of India) -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.25rem; margin-bottom: 1.5rem;">
+                <h4 style="font-size: 0.9rem; font-weight: 700; color: #1e3a8a; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fa-solid fa-building-columns"></i> 1. Location Selection
+                </h4>
+                
+                <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <!-- State Dropdown -->
+                    <div class="form-element">
+                        <label for="state" style="font-weight: 600; font-size: 0.82rem; color: #334155;">State / Union Territory</label>
+                        <select id="state" name="state" class="gov-input" required style="padding: 0.5rem; height: auto;">
+                            <option value="" disabled selected>Select State / UT</option>
+                        </select>
+                    </div>
+                    
+                    <!-- District Dropdown -->
+                    <div class="form-element">
+                        <label for="district" style="font-weight: 600; font-size: 0.82rem; color: #334155;">District</label>
+                        <select id="district" name="district" class="gov-input" required style="padding: 0.5rem; height: auto;" disabled>
+                            <option value="" disabled selected>Select District</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <!-- Taluk / Sub-District Dropdown -->
+                    <div class="form-element">
+                        <label for="taluk" id="lblTalukLabel" style="font-weight: 600; font-size: 0.82rem; color: #334155;">Sub-District / Taluk / Tehsil</label>
+                        <select id="taluk" name="taluk" class="gov-input" required style="padding: 0.5rem; height: auto;" disabled>
+                            <option value="" disabled selected>Select Sub-District</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Hobli / Local Area Dropdown -->
+                    <div class="form-element">
+                        <label for="hobli" id="lblHobliLabel" style="font-weight: 600; font-size: 0.82rem; color: #334155;">Local Area / Hobli</label>
+                        <select id="hobli" name="hobli" class="gov-input" required style="padding: 0.5rem; height: auto;" disabled>
+                            <option value="" disabled selected>Select Local Area</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Direct Auto-Opening Interactive Map Container (No Open Map Button) -->
+            <div id="mapSection" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.25rem; margin-bottom: 1.5rem; display: {% if result %}block{% else %}none{% endif %};">
+                <h4 style="font-size: 0.9rem; font-weight: 700; color: #1e3a8a; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fa-solid fa-map-pin"></i> 2. Interactive Map Property Selector
+                </h4>
+                <p style="font-size: 0.78rem; color: #64748b; margin-top: -0.25rem; margin-bottom: 0.75rem;">
+                    Click anywhere on the map or drag the pin marker to select the exact property location.
+                </p>
+
+                <!-- Leaflet Map -->
+                <div id="leafletMap" style="height: 280px; width: 100%; border-radius: 8px; border: 1px solid #cbd5e1; z-index: 1;"></div>
+
+                <!-- Selected Location Summary Details -->
+                <div id="selectedLocationCard" style="margin-top: 0.85rem; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.75rem 1rem; font-size: 0.82rem; color: #1e293b;">
+                    <div style="font-weight: 700; color: #2563eb; margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.35rem;">
+                        <i class="fa-solid fa-location-crosshairs"></i> Selected Location
+                    </div>
+                    <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.8rem;">
+                        <div><strong style="color: #475569;">State:</strong> <span id="lblState">{{ result.state if result else 'Not Selected' }}</span></div>
+                        <div><strong style="color: #475569;">District:</strong> <span id="lblDistrict">{{ result.district if result else 'Not Selected' }}</span></div>
+                        <div><strong style="color: #475569;"><span id="lblSubDistrictTitle">Sub-District</span>:</strong> <span id="lblTaluk">{{ result.taluk if result else 'Not Selected' }}</span></div>
+                        <div><strong style="color: #475569;"><span id="lblLocalAreaTitle">Local Area</span>:</strong> <span id="lblHobli">{{ result.hobli if result else 'Not Selected' }}</span></div>
+                    </div>
+                    <div style="border-top: 1px solid #f1f5f9; margin-top: 0.5rem; padding-top: 0.5rem; font-size: 0.8rem; display: flex; gap: 1.5rem;">
+                        <span><strong style="color: #475569;">Latitude:</strong> <span id="lblLat" style="font-family: monospace; font-weight: 700; color: #0f172a;">{{ result.latitude if result else '--' }}</span></span>
+                        <span><strong style="color: #475569;">Longitude:</strong> <span id="lblLng" style="font-family: monospace; font-weight: 700; color: #0f172a;">{{ result.longitude if result else '--' }}</span></span>
+                    </div>
+                </div>
+
+                <!-- Hidden inputs for coordinates -->
+                <input type="hidden" id="latitude" name="latitude" value="{{ result.latitude if result else '' }}">
+                <input type="hidden" id="longitude" name="longitude" value="{{ result.longitude if result else '' }}">
+            </div>
+
+            <!-- Property Details Section -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.25rem; margin-bottom: 1.5rem;">
+                <h4 style="font-size: 0.9rem; font-weight: 700; color: #1e3a8a; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fa-solid fa-ruler-combined"></i> 3. Property Attributes
+                </h4>
+
+                <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div class="form-element">
+                        <label for="area" style="font-weight: 600; font-size: 0.82rem; color: #334155;">Land Area</label>
+                        <input type="number" step="0.01" id="area" name="area" value="{{ result.area if result else '1200' }}" class="gov-input" required>
+                    </div>
+
+                    <div class="form-element">
+                        <label for="area_unit" style="font-weight: 600; font-size: 0.82rem; color: #334155;">Area Unit</label>
+                        <select id="area_unit" name="area_unit" class="gov-input" style="padding: 0.5rem; height: auto;">
+                            <option value="Square Feet" {% if not result or result.area_unit == 'Square Feet' %}selected{% endif %}>Square Feet</option>
+                            <option value="Square Meter" {% if result and result.area_unit == 'Square Meter' %}selected{% endif %}>Square Meter</option>
+                            <option value="Acres" {% if result and result.area_unit == 'Acres' %}selected{% endif %}>Acres</option>
+                            <option value="Cents" {% if result and result.area_unit == 'Cents' %}selected{% endif %}>Cents</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-element">
+                        <label for="land_type" style="font-weight: 600; font-size: 0.82rem; color: #334155;">Land Type</label>
+                        <select id="land_type" name="land_type" class="gov-input" style="padding: 0.5rem; height: auto;">
+                            <option value="Residential" {% if not result or result.land_type == 'Residential' %}selected{% endif %}>Residential</option>
+                            <option value="Commercial" {% if result and result.land_type == 'Commercial' %}selected{% endif %}>Commercial</option>
+                            <option value="Agricultural" {% if result and result.land_type == 'Agricultural' %}selected{% endif %}>Agricultural</option>
+                        </select>
+                    </div>
+
+                    <div class="form-element">
+                        <label for="road_access" style="font-weight: 600; font-size: 0.82rem; color: #334155;">Road Access</label>
+                        <select id="road_access" name="road_access" class="gov-input" style="padding: 0.5rem; height: auto;">
+                            <option value="Yes" {% if not result or result.road_access == 'Yes' %}selected{% endif %}>Yes</option>
+                            <option value="No" {% if result and result.road_access == 'No' %}selected{% endif %}>No</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn-action-primary" style="width: 100%; justify-content: center; font-size: 1.05rem; padding: 0.85rem; color: #fff; background: #1e3a8a; border: none; border-radius: 8px; font-weight: 700; box-shadow: 0 4px 6px -1px rgba(30, 58, 138, 0.2);">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Predict Property Price
+            </button>
+        </form>
+    </div>
+    
+    <!-- Right Column: AI-POWERED PROPERTY PRICE PREDICTION Result Output -->
+    <div class="section-card" style="margin: 0; padding: 1.5rem; min-height: 580px; background: #ffffff;">
+        {% if result %}
+            <div>
+                <!-- Header Banner -->
+                <div style="border-bottom: 2px solid #2563eb; padding-bottom: 0.85rem; margin-bottom: 1.25rem;">
+                    <span style="font-size: 0.72rem; font-weight: 800; color: #2563eb; letter-spacing: 1px; text-transform: uppercase;">AI Property Valuation System</span>
+                    <h2 style="font-size: 1.3rem; font-weight: 800; color: #0f172a; margin-top: 0.15rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fa-solid fa-chart-line" style="color: #2563eb;"></i> AI-POWERED PROPERTY PRICE PREDICTION
+                    </h2>
+                </div>
+
+                <!-- Predicted Price Hero Box -->
+                <div style="background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); border-radius: 10px; padding: 1.5rem; color: #ffffff; text-align: center; margin-bottom: 1.5rem; box-shadow: 0 4px 12px rgba(30, 58, 138, 0.25);">
+                    <span style="font-size: 0.8rem; font-weight: 700; color: #93c5fd; text-transform: uppercase; letter-spacing: 0.5px;">Predicted Property Price</span>
+                    <h2 style="font-size: 2.5rem; font-weight: 800; color: #ffffff; margin: 0.35rem 0; font-family: 'Outfit', sans-serif;">
+                        {{ result.predicted_price | currency }}
+                    </h2>
+                    <span style="font-size: 0.78rem; color: #bfdbfe; font-weight: 500;">
+                        {{ result.hobli }}, {{ result.district }}, {{ result.state }}
+                    </span>
+                </div>
+                
+                <!-- Estimated Price Range -->
+                <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 1.15rem; margin-bottom: 1.25rem;">
+                    <span style="font-size: 0.82rem; font-weight: 700; color: #334155; display: block; margin-bottom: 0.85rem;">
+                        <i class="fa-solid fa-sliders"></i> Estimated Price Range
+                    </span>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; text-align: center; gap: 0.5rem;">
+                        <div style="flex: 1; background: #ffffff; padding: 0.75rem; border-radius: 6px; border: 1px solid #e2e8f0;">
+                            <span style="font-size: 0.75rem; color: #64748b; display: block; margin-bottom: 0.25rem;">Low Estimate</span>
+                            <strong style="font-size: 1rem; color: #2563eb;">{{ result.low_estimate | currency }}</strong>
+                        </div>
+                        
+                        <div style="flex: 1; background: #eff6ff; padding: 0.75rem; border-radius: 6px; border: 1px solid #bfdbfe;">
+                            <span style="font-size: 0.75rem; color: #1e3a8a; display: block; font-weight: 700; margin-bottom: 0.25rem;">Predicted Price</span>
+                            <strong style="font-size: 1.05rem; color: #10b981;">{{ result.predicted_price | currency }}</strong>
+                        </div>
+                        
+                        <div style="flex: 1; background: #ffffff; padding: 0.75rem; border-radius: 6px; border: 1px solid #e2e8f0;">
+                            <span style="font-size: 0.75rem; color: #64748b; display: block; margin-bottom: 0.25rem;">High Estimate</span>
+                            <strong style="font-size: 1rem; color: #6366f1;">{{ result.high_estimate | currency }}</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Area Average Price & Confidence -->
+                <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
+                    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem;">
+                        <span style="font-size: 0.78rem; color: #64748b; font-weight: 600; display: block; margin-bottom: 0.25rem;">📊 Area Average Price</span>
+                        <strong style="font-size: 1.15rem; color: #0f172a; display: block;">
+                            {{ result.area_avg_price | currency }}
+                        </strong>
+                    </div>
+
+                    <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 1rem;">
+                        <span style="font-size: 0.78rem; color: #166534; font-weight: 600; display: block; margin-bottom: 0.25rem;">🎯 AI Prediction Confidence</span>
+                        <strong style="font-size: 1.05rem; color: #15803d; display: block;">
+                            {{ result.confidence }}% - High Confidence
+                        </strong>
+                    </div>
+                </div>
+
+                <!-- Summary Meta Attributes -->
+                <div style="background: #f8fafc; border-radius: 6px; padding: 0.85rem 1rem; font-size: 0.82rem; color: #475569; border: 1px solid #e2e8f0;">
+                    <strong>Property Summary:</strong> {{ result.area }} {{ result.area_unit }} ({{ result.total_sqft }} sq ft) | {{ result.land_type }} | Road Access: {{ result.road_access }}
+                </div>
+            </div>
+        {% else %}
+            <div style="text-align: center; color: #94a3b8; padding: 4rem 1rem;">
+                <i class="fa-solid fa-map-location-dot" style="font-size: 4.5rem; color: #cbd5e1; margin-bottom: 1.5rem; display: block;"></i>
+                <h3 style="font-size: 1.35rem; margin-bottom: 0.5rem; color: #334155; font-weight: 700;">
+                    Awaiting Location & Parameter Input
+                </h3>
+                <p style="font-size: 0.88rem; line-height: 1.6; color: #64748b; max-width: 360px; margin: 0 auto;">
+                    Select State, District, Taluk, and Hobli. The map will open automatically. Click on the map to pinpoint your property and click <strong>Predict Property Price</strong>.
+                </p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Global Indian States & UTs Dependent Location Data (State -> District -> Sub-District -> Local Area -> {lat, lng})
+let INDIA_LOCATIONS = {};
+
+let map = null;
+let marker = null;
+
+// Dynamic Administrative Terminology Helper
+function getAdminLabels(state) {
+    if (state === "Karnataka") {
+        return { subDistrict: "Taluk", localArea: "Hobli" };
+    } else if (state === "Tamil Nadu" || state === "Kerala" || state === "Goa") {
+        return { subDistrict: "Taluk", localArea: "Local Area" };
+    } else if (state === "Telangana" || state === "Andhra Pradesh") {
+        return { subDistrict: "Mandal", localArea: "Local Area / Village" };
+    } else if (["Maharashtra", "Gujarat", "Uttar Pradesh", "Madhya Pradesh", "Rajasthan", "Haryana", "Punjab", "Delhi", "Uttarakhand", "Himachal Pradesh", "Bihar", "Jharkhand", "Chhattisgarh"].includes(state)) {
+        return { subDistrict: "Tehsil / Taluka", localArea: "Local Area / Locality Block" };
+    }
+    return { subDistrict: "Sub-District", localArea: "Local Area" };
+}
+
+function updateDynamicLabels(state) {
+    const labels = getAdminLabels(state);
+    const lblTalukLabel = document.getElementById('lblTalukLabel');
+    const lblHobliLabel = document.getElementById('lblHobliLabel');
+    const lblSubDistrictTitle = document.getElementById('lblSubDistrictTitle');
+    const lblLocalAreaTitle = document.getElementById('lblLocalAreaTitle');
+
+    if (lblTalukLabel) lblTalukLabel.innerText = labels.subDistrict;
+    if (lblHobliLabel) lblHobliLabel.innerText = labels.localArea;
+    if (lblSubDistrictTitle) lblSubDistrictTitle.innerText = labels.subDistrict;
+    if (lblLocalAreaTitle) lblLocalAreaTitle.innerText = labels.localArea;
+    return labels;
+}
+
+function initOrUpdateMap(lat, lng) {
+    const formattedLat = parseFloat(lat).toFixed(6);
+    const formattedLng = parseFloat(lng).toFixed(6);
+    
+    document.getElementById('lblLat').innerText = formattedLat;
+    document.getElementById('lblLng').innerText = formattedLng;
+    document.getElementById('latitude').value = formattedLat;
+    document.getElementById('longitude').value = formattedLng;
+
+    const latNum = parseFloat(lat);
+    const lngNum = parseFloat(lng);
+
+    if (!map) {
+        map = L.map('leafletMap').setView([latNum, lngNum], 15);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        marker = L.marker([latNum, lngNum], {draggable: true}).addTo(map);
+
+        marker.on('dragend', function(e) {
+            const pos = e.target.getLatLng();
+            updateCoords(pos.lat, pos.lng);
+        });
+
+        map.on('click', function(e) {
+            marker.setLatLng(e.latlng);
+            updateCoords(e.latlng.lat, e.latlng.lng);
+        });
+    } else {
+        map.setView([latNum, lngNum], 15);
+        marker.setLatLng([latNum, lngNum]);
+    }
+
+    setTimeout(() => {
+        if (map) map.invalidateSize();
+    }, 150);
+}
+
+function updateCoords(lat, lng) {
+    const formattedLat = parseFloat(lat).toFixed(6);
+    const formattedLng = parseFloat(lng).toFixed(6);
+    
+    document.getElementById('lblLat').innerText = formattedLat;
+    document.getElementById('lblLng').innerText = formattedLng;
+    document.getElementById('latitude').value = formattedLat;
+    document.getElementById('longitude').value = formattedLng;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const selState = document.getElementById('state');
+    const selDistrict = document.getElementById('district');
+    const selTaluk = document.getElementById('taluk');
+    const selHobli = document.getElementById('hobli');
+    const mapSection = document.getElementById('mapSection');
+
+    // Populate States
+    function populateStates() {
+        selState.innerHTML = '<option value="" disabled selected>Select State / UT</option>';
+        if (INDIA_LOCATIONS) {
+            Object.keys(INDIA_LOCATIONS).sort().forEach(st => {
+                selState.innerHTML += `<option value="${st}">${st}</option>`;
+            });
+        }
+    }
+
+    // Reset Functions for Dependent Cascading Hierarchy
+    function resetDistrict() {
+        selDistrict.innerHTML = '<option value="" disabled selected>Select District</option>';
+        selDistrict.disabled = true;
+    }
+
+    function resetTaluk(subDistrictLabel="Sub-District") {
+        selTaluk.innerHTML = `<option value="" disabled selected>Select ${subDistrictLabel}</option>`;
+        selTaluk.disabled = true;
+    }
+
+    function resetHobli(localAreaLabel="Local Area") {
+        selHobli.innerHTML = `<option value="" disabled selected>Select ${localAreaLabel}</option>`;
+        selHobli.disabled = true;
+    }
+
+    function resetMapLocation() {
+        mapSection.style.display = 'none';
+        document.getElementById('lblLat').innerText = '--';
+        document.getElementById('lblLng').innerText = '--';
+        document.getElementById('latitude').value = '';
+        document.getElementById('longitude').value = '';
+    }
+
+    function populateDistricts(st, selectVal=null) {
+        resetDistrict();
+        if (INDIA_LOCATIONS[st]) {
+            selDistrict.disabled = false;
+            Object.keys(INDIA_LOCATIONS[st]).sort().forEach(dst => {
+                selDistrict.innerHTML += `<option value="${dst}">${dst}</option>`;
+            });
+            if (selectVal) selDistrict.value = selectVal;
+        }
+    }
+
+    function populateTaluks(st, dst, selectVal=null) {
+        const labels = getAdminLabels(st);
+        resetTaluk(labels.subDistrict);
+        if (INDIA_LOCATIONS[st] && INDIA_LOCATIONS[st][dst]) {
+            selTaluk.disabled = false;
+            Object.keys(INDIA_LOCATIONS[st][dst]).sort().forEach(tlk => {
+                selTaluk.innerHTML += `<option value="${tlk}">${tlk}</option>`;
+            });
+            if (selectVal) selTaluk.value = selectVal;
+        }
+    }
+
+    function populateHoblis(st, dst, tlk, selectVal=null) {
+        const labels = getAdminLabels(st);
+        resetHobli(labels.localArea);
+        if (INDIA_LOCATIONS[st] && INDIA_LOCATIONS[st][dst] && INDIA_LOCATIONS[st][dst][tlk]) {
+            selHobli.disabled = false;
+            Object.keys(INDIA_LOCATIONS[st][dst][tlk]).sort().forEach(hbl => {
+                selHobli.innerHTML += `<option value="${hbl}">${hbl}</option>`;
+            });
+            if (selectVal) selHobli.value = selectVal;
+        }
+    }
+
+    function getCoords(st, dst, tlk, hbl) {
+        try {
+            if (INDIA_LOCATIONS[st][dst][tlk][hbl]) {
+                return INDIA_LOCATIONS[st][dst][tlk][hbl];
+            }
+        } catch (e) {}
+        return {lat: 12.935200, lng: 77.624500};
+    }
+
+    function updateSummaryCard() {
+        document.getElementById('lblState').innerText = selState.value || 'Not Selected';
+        document.getElementById('lblDistrict').innerText = selDistrict.value || 'Not Selected';
+        document.getElementById('lblTaluk').innerText = selTaluk.value || 'Not Selected';
+        document.getElementById('lblHobli').innerText = selHobli.value || 'Not Selected';
+    }
+
+    // Cascading Event Listeners
+    selState.addEventListener('change', function() {
+        const labels = updateDynamicLabels(this.value);
+        resetDistrict();
+        resetTaluk(labels.subDistrict);
+        resetHobli(labels.localArea);
+        resetMapLocation();
+        
+        if (this.value) {
+            populateDistricts(this.value);
+        }
+        updateSummaryCard();
+    });
+
+    selDistrict.addEventListener('change', function() {
+        const labels = getAdminLabels(selState.value);
+        resetTaluk(labels.subDistrict);
+        resetHobli(labels.localArea);
+        resetMapLocation();
+        
+        if (selState.value && this.value) {
+            populateTaluks(selState.value, this.value);
+        }
+        updateSummaryCard();
+    });
+
+    selTaluk.addEventListener('change', function() {
+        const labels = getAdminLabels(selState.value);
+        resetHobli(labels.localArea);
+        resetMapLocation();
+        
+        if (selState.value && selDistrict.value && this.value) {
+            populateHoblis(selState.value, selDistrict.value, this.value);
+        }
+        updateSummaryCard();
+    });
+
+    // AUTOMATIC MAP OPEN UPON LOCAL AREA SELECTION
+    selHobli.addEventListener('change', function() {
+        updateSummaryCard();
+        if (selState.value && selDistrict.value && selTaluk.value && this.value) {
+            const coords = getCoords(selState.value, selDistrict.value, selTaluk.value, this.value);
+            mapSection.style.display = 'block';
+            initOrUpdateMap(coords.lat, coords.lng);
+        }
+    });
+
+    // Handle post-submit restoration (if result object exists)
+    function restorePostState() {
+        const resultState = "{{ result.state if result else '' }}";
+        const resultDistrict = "{{ result.district if result else '' }}";
+        const resultTaluk = "{{ result.taluk if result else '' }}";
+        const resultHobli = "{{ result.hobli if result else '' }}";
+        const resultLatStr = "{{ result.latitude if result else '' }}";
+        const resultLngStr = "{{ result.longitude if result else '' }}";
+
+        if (resultState && INDIA_LOCATIONS[resultState]) {
+            selState.value = resultState;
+            updateDynamicLabels(resultState);
+            populateDistricts(resultState, resultDistrict);
+            
+            if (resultDistrict && INDIA_LOCATIONS[resultState][resultDistrict]) {
+                populateTaluks(resultState, resultDistrict, resultTaluk);
+                
+                if (resultTaluk && INDIA_LOCATIONS[resultState][resultDistrict][resultTaluk]) {
+                    populateHoblis(resultState, resultDistrict, resultTaluk, resultHobli);
+                    
+                    if (resultHobli) {
+                        mapSection.style.display = 'block';
+                        let lat = parseFloat(resultLatStr);
+                        let lng = parseFloat(resultLngStr);
+                        if (isNaN(lat) || isNaN(lng)) {
+                            const coords = getCoords(resultState, resultDistrict, resultTaluk, resultHobli);
+                            lat = coords.lat;
+                            lng = coords.lng;
+                        }
+                        initOrUpdateMap(lat, lng);
+                    }
+                }
+            }
+            updateSummaryCard();
+        }
+    }
+
+    // Load locations dataset dynamically
+    fetch("{{ url_for('static', filename='data/locations.json') }}")
+        .then(response => response.json())
+        .then(data => {
+            INDIA_LOCATIONS = data;
+            populateStates();
+            restorePostState();
+        })
+        .catch(err => {
+            console.error("Failed to load locations dataset", err);
+        });
+});
+</script>
+{% endblock %}

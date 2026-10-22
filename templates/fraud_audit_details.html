@@ -1,0 +1,244 @@
+{% extends 'base.html' %}
+
+{% block title %}Fraud Audit Details - {{ land.survey_number }}{% endblock %}
+
+{% block content %}
+<div class="fraud-audit-page-wrapper" style="max-width: 1050px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.75rem;">
+
+    <!-- Top Action / Back Button Header -->
+    <div class="dashboard-header" style="margin-bottom: 0.5rem;">
+        <div class="dashboard-title">
+            <h1 style="font-size: 1.75rem; font-weight: 800; color: #991b1b; display: flex; align-items: center; gap: 0.75rem;">
+                <i class="fa-solid fa-shield-virus"></i> Fraud Audit Details
+            </h1>
+        </div>
+        <div>
+            <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary" style="font-weight: 600;">
+                <i class="fa-solid fa-arrow-left"></i> Back to Active Fraud Audits
+            </a>
+        </div>
+    </div>
+
+    <!-- 1. SURVEY NUMBER -->
+    <div class="glass-card" style="border-left: 5px solid #ef4444;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <div style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Survey Number</div>
+                <div class="mono" style="font-size: 1.6rem; font-weight: 800; color: #1e3a8a; margin-top: 0.15rem;">
+                    {{ land.survey_number }}
+                </div>
+            </div>
+            <div>
+                <span class="status-badge status-{{ land.status }}" style="font-size: 0.85rem; padding: 0.4rem 1rem;">
+                    STATUS: {{ land.status | upper }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2 & 3. PROPERTY PID & CURRENT OWNER (PROPERTY INFORMATION) -->
+    <div class="glass-card">
+        <h2 class="panel-title"><i class="fa-solid fa-building-columns"></i> Property & Owner Information</h2>
+        <div class="prop-info-grid">
+            <div class="prop-info-row">
+                <span class="prop-info-label">Property PID:</span>
+                <span class="prop-info-value mono">{{ land.pid or 'N/A' }}</span>
+            </div>
+            <div class="prop-info-row">
+                <span class="prop-info-label">Current Owner:</span>
+                <span class="prop-info-value owner-highlight">{{ land.owner.username if land.owner else 'Unknown' }}</span>
+            </div>
+            <div class="prop-info-row">
+                <span class="prop-info-label">Owner Citizen ID:</span>
+                <span class="prop-info-value mono">{{ land.owner.citizen_id if (land.owner and land.owner.citizen_id) else 'N/A' }}</span>
+            </div>
+            <div class="prop-info-row">
+                <span class="prop-info-label">Location / City:</span>
+                <span class="prop-info-value">{{ land.city or land.location }}</span>
+            </div>
+            <div class="prop-info-row">
+                <span class="prop-info-label">Surveyed Area:</span>
+                <span class="prop-info-value mono">{{ land.area }} sq ft</span>
+            </div>
+            <div class="prop-info-row">
+                <span class="prop-info-label">Declared Value:</span>
+                <span class="prop-info-value price-highlight">{{ land.price | currency }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. FRAUD RISK SCORE -->
+    <div class="glass-card risk-level-{{ risk_level | lower }}" style="border-left: 5px solid {% if risk_score >= 50 %}#ef4444{% elif risk_score >= 25 %}#f59e0b{% else %}#10b981{% endif %};">
+        <h2 class="panel-title"><i class="fa-solid fa-gauge-high"></i> Fraud Risk Score</h2>
+        <div style="display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;">
+            <div class="risk-score-circle risk-circle-{{ risk_level | lower }}" style="width: 75px; height: 75px;">
+                <span class="score-number" style="font-size: 1.5rem;">{{ risk_score }}%</span>
+                <span class="score-label">SCORE</span>
+            </div>
+            <div>
+                <div class="risk-level-badge risk-badge-{{ risk_level | lower }}" style="font-size: 0.9rem; padding: 0.35rem 0.85rem;">
+                    {{ risk_level }}
+                </div>
+                <p style="font-size: 0.82rem; color: #64748b; margin-top: 0.35rem;">
+                    Calculated by Random Forest Machine Learning Fraud Classifier.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. WHY THIS PROPERTY WAS FLAGGED -->
+    <div class="glass-card" style="border-color: rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.02);">
+        <h2 class="panel-title" style="color: #dc2626;"><i class="fa-solid fa-circle-exclamation"></i> Why This Property Was Flagged</h2>
+        <div style="background: #fee2e2; border: 1px solid #fca5a5; padding: 1rem 1.25rem; border-radius: 8px; color: #7f1d1d; font-size: 0.9rem; line-height: 1.5;">
+            <strong>AI Auditor Reason:</strong><br>
+            {{ record.ai_feedback or 'Anomaly detected during automated registry risk evaluation.' }}
+        </div>
+    </div>
+
+    <!-- 6. FRAUD INDICATORS / ANOMALIES -->
+    <div class="glass-card">
+        <h2 class="panel-title"><i class="fa-solid fa-triangle-exclamation"></i> Fraud Indicators / Anomalies</h2>
+        {% if record.fraud_flags %}
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                {% for flag in record.fraud_flags %}
+                    <div style="display: flex; align-items: center; gap: 0.75rem; background: #fff5f5; border: 1px solid #fca5a5; padding: 0.75rem 1rem; border-radius: 8px; color: #991b1b; font-weight: 600; font-size: 0.88rem;">
+                        <i class="fa-solid fa-triangle-exclamation" style="color: #ef4444; font-size: 1rem;"></i>
+                        <span>• {{ flag }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div style="color: #059669; font-weight: 600; background: #ecfdf5; padding: 0.85rem 1rem; border-radius: 8px; border: 1px solid #a7f3d0; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fa-solid fa-circle-check"></i> No specific anomaly flags recorded for this property.
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- 7. EVIDENCE / DETECTION DETAILS -->
+    <div class="glass-card">
+        <h2 class="panel-title"><i class="fa-solid fa-magnifying-glass-chart"></i> Evidence / Detection Details</h2>
+        <div class="table-wrapper" style="margin-top: 0;">
+            <table class="custom-table" style="min-width: 100%;">
+                <thead>
+                    <tr>
+                        <th style="width: 35%;">Detection Factor</th>
+                        <th style="width: 40%;">Observed Value</th>
+                        <th style="width: 25%; text-align: center;">Risk Contribution</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Price Valuation Variance</strong></td>
+                        <td>
+                            Declared: {{ land.price | currency }}<br>
+                            <span style="font-size: 0.78rem; color: #64748b;">ML Fair Estimate: {{ pred_price | currency }}</span>
+                        </td>
+                        <td style="text-align: center;">
+                            {% if price_var > 1.4 or price_var < 0.6 %}
+                                <span class="status-badge status-flagged">High (Price Outlier)</span>
+                            {% else %}
+                                <span class="status-badge status-verified">Normal</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Document OCR Integrity</strong></td>
+                        <td>{{ doc_notes }}</td>
+                        <td style="text-align: center;">
+                            {% if ocr_status == 'Failed' %}
+                                <span class="status-badge status-flagged">High (Mismatch)</span>
+                            {% else %}
+                                <span class="status-badge status-verified">Normal</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Transfer Frequency (12 Months)</strong></td>
+                        <td>{{ transfers_count }} ownership transfer(s) logged</td>
+                        <td style="text-align: center;">
+                            {% if transfers_count > 2 %}
+                                <span class="status-badge status-pending">Medium (Fast Flip)</span>
+                            {% else %}
+                                <span class="status-badge status-verified">Normal</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Registry Status Flag</strong></td>
+                        <td>Land Status: <strong class="mono">{{ land.status | upper }}</strong></td>
+                        <td style="text-align: center;">
+                            {% if land.status in ['flagged', 'rejected'] %}
+                                <span class="status-badge status-flagged">High</span>
+                            {% else %}
+                                <span class="status-badge status-verified">Normal</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 8 & 9. OCR VERIFICATION STATUS & AI FRAUD DETECTION STATUS -->
+    <div class="glass-card" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 1.1rem 1.25rem; border-radius: 10px;">
+            <div style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 0.35rem;">
+                OCR Verification Status
+            </div>
+            <div>
+                {% if ocr_status == 'Verified' %}
+                    <span class="status-badge status-verified" style="font-size: 0.85rem; padding: 0.35rem 0.85rem;"><i class="fa-solid fa-circle-check"></i> Verified</span>
+                {% elif ocr_status == 'Failed' %}
+                    <span class="status-badge status-flagged" style="font-size: 0.85rem; padding: 0.35rem 0.85rem;"><i class="fa-solid fa-triangle-exclamation"></i> Failed</span>
+                {% else %}
+                    <span class="status-badge status-pending" style="font-size: 0.85rem; padding: 0.35rem 0.85rem;"><i class="fa-solid fa-clock"></i> Pending</span>
+                {% endif %}
+            </div>
+        </div>
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 1.1rem 1.25rem; border-radius: 10px;">
+            <div style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 0.35rem;">
+                AI Fraud Detection Status
+            </div>
+            <div>
+                {% if fraud_status == 'Cleared' %}
+                    <span class="status-badge status-verified" style="font-size: 0.85rem; padding: 0.35rem 0.85rem;"><i class="fa-solid fa-shield-check"></i> Cleared</span>
+                {% elif fraud_status == 'Flagged' %}
+                    <span class="status-badge status-flagged" style="font-size: 0.85rem; padding: 0.35rem 0.85rem;"><i class="fa-solid fa-flag"></i> Flagged</span>
+                {% else %}
+                    <span class="status-badge status-pending" style="font-size: 0.85rem; padding: 0.35rem 0.85rem;"><i class="fa-solid fa-magnifying-glass"></i> Under Review</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 10. RECOMMENDED ACTION -->
+    <div class="glass-card" style="border-left: 5px solid #2563eb;">
+        <h2 class="panel-title" style="color: #2563eb;"><i class="fa-solid fa-user-gear"></i> Recommended Action</h2>
+        <div style="font-size: 1.05rem; font-weight: 700; color: #1e3a8a;">
+            <i class="fa-solid fa-lightbulb" style="color: #f59e0b;"></i> {{ recommended_action }}
+        </div>
+    </div>
+
+    <!-- 11. AUDIT DECISION -->
+    <div class="glass-card" style="border: 1px solid #fca5a5; background: #fff5f5;">
+        <h2 class="panel-title" style="color: #b91c1c;"><i class="fa-solid fa-gavel"></i> Audit Decision</h2>
+        <form action="{{ url_for('fraud.resolve_fraud', record_id=record.id) }}" method="POST">
+            <div class="form-element" style="margin-bottom: 1rem;">
+                <label style="font-size: 0.85rem; font-weight: 700; color: #475569; margin-bottom: 0.35rem; display: block;">Resolution Decision</label>
+                <select name="resolution" class="gov-input" style="padding: 0.55rem; font-size: 0.88rem; width: 100%; border: 1px solid #cbd5e1; border-radius: 6px;">
+                    <option value="resolved_clear">Resolved: Clear Flags (Mark Verified)</option>
+                    <option value="confirmed_fraud">Confirmed: Confirm Fraud (Keep Flagged)</option>
+                </select>
+            </div>
+            <div class="form-element" style="margin-bottom: 1.25rem;">
+                <label style="font-size: 0.85rem; font-weight: 700; color: #475569; margin-bottom: 0.35rem; display: block;">Auditor Notes</label>
+                <textarea name="notes" class="gov-input" rows="3" required style="padding: 0.55rem; font-size: 0.88rem; width: 100%; border: 1px solid #cbd5e1; border-radius: 6px;"></textarea>
+            </div>
+            <button type="submit" class="btn-action-primary" style="width: 100%; padding: 0.65rem; font-size: 0.9rem; justify-content: center; color: #fff; background: #b91c1c; border-color: #991b1b; font-weight: 700; cursor: pointer;">
+                Submit Audit Decision
+            </button>
+        </form>
+    </div>
+
+</div>
+{% endblock %}

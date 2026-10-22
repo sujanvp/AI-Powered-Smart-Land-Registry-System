@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block title %}Land Registration - AI Smart Land Registry System{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto;">
+    <div class="section-card">
+        <div class="card-header-row"
+            style="border-bottom: 1px solid #e2e8f0; padding-bottom: 1rem; margin-bottom: 1.5rem;">
+            <h3><i class="fa-solid fa-circle-plus"></i> Land Registration</h3>
+
+        </div>
+
+        <form id="register-land-form" action="{{ url_for('land.register_land') }}" method="POST"
+            enctype="multipart/form-data">
+            <div class="form-grid">
+                <div class="form-element">
+                    <label for="display_area">Land Area</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="number" step="0.01" id="display_area" class="gov-input" style="flex: 2;" required>
+                        <select id="area_unit" class="gov-input" style="flex: 1;">
+                            <option value="sqft">Sq Ft</option>
+                            <option value="acre">Acre</option>
+                            <option value="guntha">Guntha</option>
+                        </select>
+                    </div>
+                    <input type="hidden" id="area" name="area" required>
+                </div>
+
+                <div class="form-element">
+                    <label for="city">City</label>
+                    <input type="text" id="city" name="city" class="gov-input" required>
+                </div>
+
+                <div class="form-element">
+                    <label for="state">State</label>
+                    <input type="text" id="state" name="state" class="gov-input" required>
+                </div>
+
+                <div class="form-element">
+                    <label for="price">Declared Market Value ($)</label>
+                    <input type="number" id="price" name="price" class="gov-input" required>
+                </div>
+
+                <div class="form-element">
+                    <label for="pid">Property PID Number</label>
+                    <input type="text" id="pid" name="pid" class="gov-input" required>
+                </div>
+
+                <div class="form-element">
+                    <label for="survey_number">Physical Survey Number</label>
+                    <input type="text" id="survey_number" name="survey_number" class="gov-input" required>
+                </div>
+            </div>
+
+            <div class="form-element" style="margin-top: 1rem;">
+                <label for="land_image">Property Image Upload</label>
+                <div class="file-upload-wrapper">
+                    <input type="file" id="land_image" name="land_image" class="gov-file-input" accept="image/*"
+                        required>
+                </div>
+            </div>
+
+            <div class="form-element" style="margin-top: 1rem;">
+                <label for="aadhar_document">Title Deed / Ownership Document / Property Document (For Tesseract OCR
+                    Scan)</label>
+                <div class="file-upload-wrapper">
+                    <input type="file" id="aadhar_document" name="aadhar_document" class="gov-file-input"
+                        accept=".pdf,.png,.jpg,.jpeg,.txt" required>
+                </div>
+            </div>
+
+            <div
+                style="display: flex; gap: 1rem; margin-top: 2rem; border-top: 1px solid #e2e8f0; padding-top: 1.5rem;">
+                <button type="submit" class="btn-action-primary"
+                    style="font-size: 1rem; padding: 0.75rem 2.5rem; color: #fff;">
+                    Register Property
+                </button>
+                <a href="{{ url_for('land.dashboard') }}" class="btn-action-secondary"
+                    style="padding: 0.75rem 2rem;">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById('register-land-form').addEventListener('submit', function (e) {
+        var displayArea = parseFloat(document.getElementById('display_area').value);
+        var unit = document.getElementById('area_unit').value;
+        var sqftArea = displayArea;
+
+        if (unit === 'acre') {
+            sqftArea = displayArea * 43560;
+        } else if (unit === 'guntha') {
+            sqftArea = displayArea * 1089;
+        }
+
+        document.getElementById('area').value = Math.round(sqftArea);
+    });
+</script>
+{% endblock %}

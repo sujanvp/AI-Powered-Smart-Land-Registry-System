@@ -1,0 +1,798 @@
+{% extends 'base.html' %}
+
+{% block title %}Land Records & Ownership - AI Smart Land Registry System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="header-left">
+        <h1>Land Records & Ownership</h1>
+    </div>
+</div>
+
+<!-- Search Panel -->
+<div class="section-card" style="padding: 1.5rem; margin-bottom: 2rem;">
+    <form action="{{ url_for('land.records') }}" method="GET" style="display: flex; gap: 1rem; align-items: center;">
+        <div style="flex: 1; position: relative;">
+            <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 1rem; top: 1rem; color: #94a3b8;"></i>
+            <input type="text" name="q" value="{{ search_query or '' }}" class="gov-input" style="padding-left: 2.75rem; width: 100%; margin: 0;">
+        </div>
+        <button type="submit" class="btn-action-primary" style="padding: 0.75rem 2rem; color: #fff; margin: 0;">
+            Search Records
+        </button>
+        {% if search_query %}
+            <a href="{{ url_for('land.records') }}" class="btn-action-secondary" style="padding: 0.75rem 1.5rem;">Clear</a>
+        {% endif %}
+    </form>
+</div>
+
+{% if is_global_search %}
+
+<!-- SURVEY NUMBER HEADER (Removed Global Lookup Result Heading) -->
+<div class="search-results-banner" style="background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); color: #fff; padding: 1.25rem 2rem; border-radius: 12px; margin-bottom: 2rem; box-shadow: 0 4px 12px rgba(30, 58, 138, 0.15);">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h2 style="font-size: 1.6rem; margin: 0; font-weight: 800; color: #ffffff;" class="mono">
+                SURVEY NUMBER: {{ searched_survey_number }}
+            </h2>
+        </div>
+        <div>
+            <a href="{{ url_for('land.records') }}" class="btn" style="background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.3); padding: 0.5rem 1.25rem; font-weight: 600; border-radius: 8px; text-decoration: none;">
+                <i class="fa-solid fa-arrow-left"></i> View All Records
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- 1. LAND REGISTRATION DETAILS -->
+<div class="section-card" style="margin-bottom: 2rem; padding: 1.5rem;">
+    <div class="card-header-row" style="border-bottom: 2px solid #e2e8f0; padding-bottom: 0.75rem; margin-bottom: 1.25rem;">
+        <h3 style="font-size: 1.2rem; font-weight: 700; color: #1e3a8a; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+            🏠 Land Registration Details
+        </h3>
+    </div>
+    {% if registration_records %}
+        {% for land in registration_records %}
+            <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 10px; padding: 1.25rem; margin-bottom: 1rem;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;">
+                    <div>
+                        <h4 style="font-size: 1.15rem; color: #0f172a; margin: 0 0 0.25rem 0;" class="mono">
+                            Survey Number: {{ land.survey_number }}
+                        </h4>
+                        <span style="font-size: 0.85rem; color: #475569; font-weight: 600;" class="mono">
+                            Property PID: {{ land.pid or ('PID-KA-BLR-2026-' ~ "%06d"|format(land.id)) }}
+                        </span>
+                    </div>
+                    <div>
+                        <span class="status-badge {% if land.status in ['verified', 'approved'] %}status-verified{% elif land.status == 'flagged' %}status-flagged{% else %}status-pending{% endif %}" style="padding: 0.35rem 0.85rem; font-weight: 700; text-transform: uppercase;">
+                            Status: {{ land.status | upper }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1rem; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; padding: 1rem 0;">
+                    <div>
+                        <span style="font-size: 0.75rem; color: #64748b; font-weight: 700; text-transform: uppercase; display: block;">Current Owner</span>
+                        <strong style="color: #1e293b; font-size: 0.95rem;">{{ land.owner.username if land.owner else 'N/A' }}</strong>
+                        <span style="display: block; font-size: 0.78rem; color: #64748b;" class="mono">Citizen ID: {{ land.owner.citizen_id if land.owner else 'N/A' }}</span>
+                    </div>
+                    <div>
+                        <span style="font-size: 0.75rem; color: #64748b; font-weight: 700; text-transform: uppercase; display: block;">Property Location</span>
+                        <strong style="color: #1e293b; font-size: 0.95rem;">{{ land.city or land.location or 'Bengaluru' }}</strong>
+                        <span style="display: block; font-size: 0.78rem; color: #64748b;">{{ land.state or 'Karnataka' }}</span>
+                    </div>
+                    <div>
+                        <span style="font-size: 0.75rem; color: #64748b; font-weight: 700; text-transform: uppercase; display: block;">Total Area</span>
+                        <strong style="color: #1e293b; font-size: 0.95rem;" class="mono">{{ land.area | int }} sq.m.</strong>
+                    </div>
+                    <div>
+                        <span style="font-size: 0.75rem; color: #64748b; font-weight: 700; text-transform: uppercase; display: block;">Declared Price / Value</span>
+                        <strong style="color: #059669; font-size: 0.95rem;" class="mono">{{ land.price | currency }}</strong>
+                    </div>
+                    <div>
+                        <span style="font-size: 0.75rem; color: #64748b; font-weight: 700; text-transform: uppercase; display: block;">GPS Coordinates</span>
+                        <span style="font-size: 0.85rem; color: #475569;" class="mono">{{ land.latitude }}, {{ land.longitude }}</span>
+                    </div>
+                    <div>
+                        <span style="font-size: 0.75rem; color: #64748b; font-weight: 700; text-transform: uppercase; display: block;">Registration Date</span>
+                        <span style="font-size: 0.85rem; color: #475569;">{{ land.created_at.strftime('%d %b %Y, %H:%M') if land.created_at else 'N/A' }}</span>
+                    </div>
+                </div>
+
+                {% if land.description %}
+                    <div style="font-size: 0.85rem; color: #334155; margin-bottom: 0.5rem;">
+                        <strong>Registration Details / Description:</strong> {{ land.description }}
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
+    {% else %}
+        <div style="padding: 1.25rem; text-align: center; color: #64748b; font-weight: 600; background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1;">
+            No records found for this Survey Number.
+        </div>
+    {% endif %}
+</div>
+
+<!-- 2. LAND TRANSFER REQUESTS -->
+<div class="section-card" style="margin-bottom: 2rem; padding: 1.5rem;">
+    <div class="card-header-row" style="border-bottom: 2px solid #e2e8f0; padding-bottom: 0.75rem; margin-bottom: 1.25rem;">
+        <h3 style="font-size: 1.2rem; font-weight: 700; color: #1e3a8a; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+            🔄 Land Transfer Requests
+        </h3>
+    </div>
+    {% if transfer_requests %}
+        <div class="table-responsive">
+            <table class="gov-table" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: #f1f5f9; text-align: left; font-size: 0.8rem; text-transform: uppercase; color: #475569;">
+                        <th style="padding: 0.75rem 1rem;">Transfer Reference</th>
+                        <th style="padding: 0.75rem 1rem;">Current Owner / Seller</th>
+                        <th style="padding: 0.75rem 1rem;">Proposed Buyer</th>
+                        <th style="padding: 0.75rem 1rem;">Transfer Reason</th>
+                        <th style="padding: 0.75rem 1rem;">Declared Value</th>
+                        <th style="padding: 0.75rem 1rem;">Submitted Date</th>
+                        <th style="padding: 0.75rem 1rem;">Status</th>
+                        <th style="padding: 0.75rem 1rem;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for req in transfer_requests %}
+                        <tr style="border-bottom: 1px solid #e2e8f0; font-size: 0.85rem;">
+                            <td style="padding: 0.75rem 1rem; font-weight: 700;" class="mono">{{ req.transfer_ref }}</td>
+                            <td style="padding: 0.75rem 1rem;">
+                                <strong>{{ req.seller.username if req.seller else 'Seller' }}</strong>
+                                <br><span style="font-size: 0.75rem; color: #64748b;" class="mono">{{ req.seller_citizen_id or (req.seller.citizen_id if req.seller else '') }}</span>
+                            </td>
+                            <td style="padding: 0.75rem 1rem;">
+                                <strong>{{ req.buyer.username if req.buyer else 'Buyer' }}</strong>
+                                <br><span style="font-size: 0.75rem; color: #64748b;" class="mono">{{ req.buyer_citizen_id or (req.buyer.citizen_id if req.buyer else '') }}</span>
+                            </td>
+                            <td style="padding: 0.75rem 1rem;">{{ req.transfer_reason or 'Sale' }}</td>
+                            <td style="padding: 0.75rem 1rem; font-weight: 700; color: #059669;" class="mono">{{ req.bid_price | currency }}</td>
+                            <td style="padding: 0.75rem 1rem;">{{ req.created_at.strftime('%d %b %Y') if req.created_at else 'N/A' }}</td>
+                            <td style="padding: 0.75rem 1rem;">
+                                {% if req.status == 'approved' %}
+                                    <span class="status-badge status-verified" style="font-size: 0.75rem;">APPROVED FOR OFFLINE REGISTRATION</span>
+                                {% elif req.status in ['final_registered', 'completed'] %}
+                                    <span class="status-badge status-verified" style="font-size: 0.75rem; background: #059669; color: #fff;">FINAL REGISTERED / TRANSFER COMPLETED</span>
+                                {% elif req.status == 'rejected' %}
+                                    <span class="status-badge status-flagged" style="font-size: 0.75rem;">REJECTED</span>
+                                {% else %}
+                                    <span class="status-badge status-pending" style="font-size: 0.75rem;">PENDING</span>
+                                {% endif %}
+                            </td>
+                            <td style="padding: 0.75rem 1rem;">
+                                <div style="display: flex; gap: 0.4rem; align-items: center;">
+                                    {% if req.status == 'pending' %}
+                                        <form action="{{ url_for('land.approve_request', request_id=req.id) }}" method="POST" style="margin: 0;">
+                                            <button type="submit" class="btn" style="padding: 0.3rem 0.75rem; font-size: 0.78rem; background: #16a34a; color: #fff; border: none; border-radius: 4px; font-weight: 700; cursor: pointer;">
+                                                ✅ Approve
+                                            </button>
+                                        </form>
+                                    {% elif req.status == 'approved' %}
+                                        <a href="{{ url_for('land.edit_transfer_request', request_id=req.id) }}" class="btn" style="padding: 0.3rem 0.75rem; font-size: 0.78rem; background: #2563eb; color: #fff; text-decoration: none; border-radius: 4px; font-weight: 700;">
+                                            ✏️ Edit
+                                        </a>
+                                    {% elif req.status in ['completed', 'final_registered'] %}
+                                        <a href="{{ url_for('land.view_final_transfer_certificate', transfer_id=req.id) }}" target="_blank" class="btn" style="padding: 0.3rem 0.75rem; font-size: 0.78rem; background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; text-decoration: none; border-radius: 4px; font-weight: 700;">
+                                            📄 Final Certificate 👁️ View
+                                        </a>
+                                    {% else %}
+                                        <span style="font-size: 0.75rem; color: #94a3b8;">N/A</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div style="padding: 1.25rem; text-align: center; color: #64748b; font-weight: 600; background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1;">
+            No records found for this Survey Number.
+        </div>
+    {% endif %}
+</div>
+
+<!-- 3. PENDING TRANSFER REQUESTS -->
+<div class="section-card" style="margin-bottom: 2rem; padding: 1.5rem;">
+    <div class="card-header-row" style="border-bottom: 2px solid #e2e8f0; padding-bottom: 0.75rem; margin-bottom: 1.25rem;">
+        <h3 style="font-size: 1.2rem; font-weight: 700; color: #1e3a8a; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+            ⏳ Pending Transfer Requests
+        </h3>
+    </div>
+    {% if pending_requests %}
+        <div class="table-responsive">
+            <table class="gov-table" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: #f1f5f9; text-align: left; font-size: 0.8rem; text-transform: uppercase; color: #475569;">
+                        <th style="padding: 0.75rem 1rem;">Pending Reference</th>
+                        <th style="padding: 0.75rem 1rem;">Seller</th>
+                        <th style="padding: 0.75rem 1rem;">Proposed Buyer</th>
+                        <th style="padding: 0.75rem 1rem;">Transfer Reason</th>
+                        <th style="padding: 0.75rem 1rem;">Submitted Date</th>
+                        <th style="padding: 0.75rem 1rem;">Pending Approval Status</th>
+                        <th style="padding: 0.75rem 1rem;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for req in pending_requests %}
+                        <tr style="border-bottom: 1px solid #e2e8f0; font-size: 0.85rem;">
+                            <td style="padding: 0.75rem 1rem; font-weight: 700;" class="mono">{{ req.transfer_ref }}</td>
+                            <td style="padding: 0.75rem 1rem;">
+                                <strong>{{ req.seller.username if req.seller else 'Seller' }}</strong>
+                                <br><span style="font-size: 0.75rem; color: #64748b;" class="mono">{{ req.seller_citizen_id or (req.seller.citizen_id if req.seller else '') }}</span>
+                            </td>
+                            <td style="padding: 0.75rem 1rem;">
+                                <strong>{{ req.buyer.username if req.buyer else 'Buyer' }}</strong>
+                                <br><span style="font-size: 0.75rem; color: #64748b;" class="mono">{{ req.buyer_citizen_id or (req.buyer.citizen_id if req.buyer else '') }}</span>
+                            </td>
+                            <td style="padding: 0.75rem 1rem;">{{ req.transfer_reason or 'Sale' }}</td>
+                            <td style="padding: 0.75rem 1rem;">{{ req.created_at.strftime('%d %b %Y, %H:%M') if req.created_at else 'N/A' }}</td>
+                            <td style="padding: 0.75rem 1rem;">
+                                <span class="status-badge status-pending" style="font-size: 0.75rem; font-weight: 700;">AWAITING APPROVAL</span>
+                            </td>
+                            <td style="padding: 0.75rem 1rem;">
+                                <form action="{{ url_for('land.approve_request', request_id=req.id) }}" method="POST" style="margin: 0;">
+                                    <button type="submit" class="btn" style="padding: 0.35rem 0.85rem; font-size: 0.78rem; background: #16a34a; color: #fff; border: none; border-radius: 4px; font-weight: 700; cursor: pointer;">
+                                        ✅ Approve
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div style="padding: 1.25rem; text-align: center; color: #64748b; font-weight: 600; background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1;">
+            No records found for this Survey Number.
+        </div>
+    {% endif %}
+</div>
+
+<!-- 4. CURRENT OWNERSHIP DETAILS -->
+<div class="section-card" style="margin-bottom: 2rem; padding: 1.5rem;">
+    <div class="card-header-row" style="border-bottom: 2px solid #e2e8f0; padding-bottom: 0.75rem; margin-bottom: 1.25rem;">
+        <h3 style="font-size: 1.2rem; font-weight: 700; color: #1e3a8a; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+            👤 Current Ownership Details
+        </h3>
+    </div>
+    {% if current_ownership %}
+        <div class="table-responsive">
+            <table class="gov-table" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: #f1f5f9; text-align: left; font-size: 0.8rem; text-transform: uppercase; color: #475569;">
+                        <th style="padding: 0.75rem 1rem;">Current Owner Name</th>
+                        <th style="padding: 0.75rem 1rem;">Citizen ID</th>
+                        <th style="padding: 0.75rem 1rem;">Survey Number</th>
+                        <th style="padding: 0.75rem 1rem;">Property PID</th>
+                        <th style="padding: 0.75rem 1rem;">Ownership Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for land in current_ownership %}
+                        <tr style="border-bottom: 1px solid #e2e8f0; font-size: 0.85rem;">
+                            <td style="padding: 0.75rem 1rem;">
+                                <strong style="color: #0f172a; font-size: 0.95rem;">{{ land.owner.username if land.owner else 'Registry Owner' }}</strong>
+                            </td>
+                            <td style="padding: 0.75rem 1rem; font-weight: 600;" class="mono">
+                                {{ land.owner.citizen_id if land.owner else 'N/A' }}
+                            </td>
+                            <td style="padding: 0.75rem 1rem; font-weight: 700;" class="mono">
+                                {{ land.survey_number }}
+                            </td>
+                            <td style="padding: 0.75rem 1rem; font-weight: 600;" class="mono">
+                                {{ land.pid or ('PID-KA-BLR-2026-' ~ "%06d"|format(land.id)) }}
+                            </td>
+                            <td style="padding: 0.75rem 1rem;">
+                                <span class="status-badge status-verified" style="font-size: 0.75rem; font-weight: 700;">
+                                    REGISTERED OWNER ({{ (land.status or 'VERIFIED') | upper }})
+                                </span>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div style="padding: 1.25rem; text-align: center; color: #64748b; font-weight: 600; background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1;">
+            No records found for this Survey Number.
+        </div>
+    {% endif %}
+</div>
+
+<!-- 5. COMPLETE OWNERSHIP HISTORY -->
+<div class="section-card" style="margin-bottom: 2rem; padding: 1.5rem;">
+    <div class="card-header-row" style="border-bottom: 2px solid #e2e8f0; padding-bottom: 0.75rem; margin-bottom: 1.25rem;">
+        <h3 style="font-size: 1.2rem; font-weight: 700; color: #1e3a8a; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+            📜 Complete Ownership History
+        </h3>
+    </div>
+    {% if ownership_history %}
+        <div class="table-responsive">
+            <table class="gov-table" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: #f1f5f9; text-align: left; font-size: 0.8rem; text-transform: uppercase; color: #475569;">
+                        <th style="padding: 0.75rem 1rem;">Transfer Reference</th>
+                        <th style="padding: 0.75rem 1rem;">Previous Owner</th>
+                        <th style="padding: 0.75rem 1rem;">New Owner</th>
+                        <th style="padding: 0.75rem 1rem;">Ownership Change Date</th>
+                        <th style="padding: 0.75rem 1rem;">Reason / Details</th>
+                        <th style="padding: 0.75rem 1rem;">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for h in ownership_history %}
+                        <tr style="border-bottom: 1px solid #e2e8f0; font-size: 0.85rem;">
+                            <td style="padding: 0.75rem 1rem; font-weight: 700;" class="mono">{{ h.transfer_ref }}</td>
+                            <td style="padding: 0.75rem 1rem;">
+                                {% if h.previous_owner %}
+                                    <strong>{{ h.previous_owner.username }}</strong>
+                                    <br><span style="font-size: 0.75rem; color: #64748b;" class="mono">{{ h.previous_owner.citizen_id }}</span>
+                                {% else %}
+                                    <span style="color: #64748b; font-style: italic;">Initial Registration</span>
+                                {% endif %}
+                            </td>
+                            <td style="padding: 0.75rem 1rem;">
+                                <strong>{{ h.new_owner.username if h.new_owner else 'N/A' }}</strong>
+                                <br><span style="font-size: 0.75rem; color: #64748b;" class="mono">{{ h.new_owner.citizen_id if h.new_owner else '' }}</span>
+                            </td>
+                            <td style="padding: 0.75rem 1rem;">{{ h.transfer_date.strftime('%d %b %Y, %H:%M') if h.transfer_date else 'N/A' }}</td>
+                            <td style="padding: 0.75rem 1rem;">
+                                Property Transfer (Value: <strong style="color: #059669;" class="mono">{{ h.transfer_price | currency }}</strong>)
+                            </td>
+                            <td style="padding: 0.75rem 1rem;">
+                                <span class="status-badge status-verified" style="font-size: 0.75rem;">COMPLETED</span>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div style="padding: 1.25rem; text-align: center; color: #64748b; font-weight: 600; background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1;">
+            No records found for this Survey Number.
+        </div>
+    {% endif %}
+</div>
+
+<!-- 6. COMPLETE TRANSFER HISTORY -->
+<div class="section-card" style="margin-bottom: 2rem; padding: 1.5rem;">
+    <div class="card-header-row" style="border-bottom: 2px solid #e2e8f0; padding-bottom: 0.75rem; margin-bottom: 1.25rem;">
+        <h3 style="font-size: 1.2rem; font-weight: 700; color: #1e3a8a; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+            🔄 Complete Transfer History
+        </h3>
+    </div>
+    {% if transfer_history %}
+        <div class="table-responsive">
+            <table class="gov-table" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: #f1f5f9; text-align: left; font-size: 0.8rem; text-transform: uppercase; color: #475569;">
+                        <th style="padding: 0.75rem 1rem;">Transfer Reference</th>
+                        <th style="padding: 0.75rem 1rem;">Seller</th>
+                        <th style="padding: 0.75rem 1rem;">Buyer</th>
+                        <th style="padding: 0.75rem 1rem;">Transfer Reason</th>
+                        <th style="padding: 0.75rem 1rem;">Transfer Date</th>
+                        <th style="padding: 0.75rem 1rem;">Declared Value</th>
+                        <th style="padding: 0.75rem 1rem;">Transfer Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for req in transfer_history %}
+                        <tr style="border-bottom: 1px solid #e2e8f0; font-size: 0.85rem;">
+                            <td style="padding: 0.75rem 1rem; font-weight: 700;" class="mono">{{ req.transfer_ref }}</td>
+                            <td style="padding: 0.75rem 1rem;">
+                                <strong>{{ req.seller.username if req.seller else 'Seller' }}</strong>
+                                <br><span style="font-size: 0.75rem; color: #64748b;" class="mono">{{ req.seller_citizen_id or (req.seller.citizen_id if req.seller else '') }}</span>
+                            </td>
+                            <td style="padding: 0.75rem 1rem;">
+                                <strong>{{ req.buyer.username if req.buyer else 'Buyer' }}</strong>
+                                <br><span style="font-size: 0.75rem; color: #64748b;" class="mono">{{ req.buyer_citizen_id or (req.buyer.citizen_id if req.buyer else '') }}</span>
+                            </td>
+                            <td style="padding: 0.75rem 1rem;">{{ req.transfer_reason or 'Sale' }}</td>
+                            <td style="padding: 0.75rem 1rem;">{{ req.created_at.strftime('%d %b %Y, %H:%M') if req.created_at else 'N/A' }}</td>
+                            <td style="padding: 0.75rem 1rem; font-weight: 700; color: #059669;" class="mono">{{ req.bid_price | currency }}</td>
+                            <td style="padding: 0.75rem 1rem;">
+                                {% if req.status in ['final_registered', 'completed'] %}
+                                    <span class="status-badge status-verified" style="font-size: 0.75rem; background: #059669; color: #fff;">FINAL REGISTERED</span>
+                                {% elif req.status == 'approved' %}
+                                    <span class="status-badge status-verified" style="font-size: 0.75rem;">APPROVED FOR OFFLINE REGISTRATION</span>
+                                {% elif req.status == 'rejected' %}
+                                    <span class="status-badge status-flagged" style="font-size: 0.75rem;">REJECTED</span>
+                                {% else %}
+                                    <span class="status-badge status-pending" style="font-size: 0.75rem;">PENDING</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div style="padding: 1.25rem; text-align: center; color: #64748b; font-weight: 600; background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1;">
+            No records found for this Survey Number.
+        </div>
+    {% endif %}
+</div>
+
+<!-- 7. APPROVAL / FINAL REGISTRATION STATUS -->
+<div class="section-card" style="margin-bottom: 2rem; padding: 1.5rem;">
+    <div class="card-header-row" style="border-bottom: 2px solid #e2e8f0; padding-bottom: 0.75rem; margin-bottom: 1.25rem;">
+        <h3 style="font-size: 1.2rem; font-weight: 700; color: #1e3a8a; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+            📄 Approval / Final Registration Status
+        </h3>
+    </div>
+    {% if transfer_requests %}
+        <div class="table-responsive">
+            <table class="gov-table" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: #f1f5f9; text-align: left; font-size: 0.8rem; text-transform: uppercase; color: #475569;">
+                        <th style="padding: 0.75rem 1rem;">Transfer Ref</th>
+                        <th style="padding: 0.75rem 1rem;">Current Stage</th>
+                        <th style="padding: 0.75rem 1rem;">Status Details</th>
+                        <th style="padding: 0.75rem 1rem;">Dynamic Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for req in transfer_requests %}
+                        <tr style="border-bottom: 1px solid #e2e8f0; font-size: 0.85rem;">
+                            <td style="padding: 0.75rem 1rem; font-weight: 700;" class="mono">{{ req.transfer_ref }}</td>
+                            <td style="padding: 0.75rem 1rem;">
+                                {% if req.status == 'pending' %}
+                                    <span style="font-weight: 700; color: #d97706;">STAGE 1: ONLINE APPROVAL PENDING</span>
+                                {% elif req.status == 'approved' %}
+                                    <span style="font-weight: 700; color: #2563eb;">STAGE 2: OFFLINE VERIFICATION PENDING</span>
+                                {% elif req.status in ['final_registered', 'completed'] %}
+                                    <span style="font-weight: 700; color: #059669;">STAGE 3: FINAL REGISTERED & COMPLETED</span>
+                                {% else %}
+                                    <span style="font-weight: 700; color: #ef4444;">REJECTED</span>
+                                {% endif %}
+                            </td>
+                            <td style="padding: 0.75rem 1rem;">
+                                {% if req.status == 'pending' %}
+                                    Awaiting Revenue Officer review & initial approval.
+                                {% elif req.status == 'approved' %}
+                                    Approved for offline registration. Transfer Approval Certificate issued.
+                                {% elif req.status in ['final_registered', 'completed'] %}
+                                    Final legal registration completed. Ownership transferred to Buyer.
+                                {% else %}
+                                    Transfer request was rejected.
+                                {% endif %}
+                            </td>
+                            <td style="padding: 0.75rem 1rem;">
+                                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                    {% if req.status == 'pending' %}
+                                        <form action="{{ url_for('land.approve_request', request_id=req.id) }}" method="POST" style="margin: 0;">
+                                            <button type="submit" class="btn" style="padding: 0.35rem 0.85rem; font-size: 0.78rem; background: #16a34a; color: #fff; border: none; border-radius: 4px; font-weight: 700; cursor: pointer;">
+                                                ✅ Approve
+                                            </button>
+                                        </form>
+                                    {% elif req.status == 'approved' %}
+                                        <a href="{{ url_for('land.edit_transfer_request', request_id=req.id) }}" class="btn" style="padding: 0.35rem 0.85rem; font-size: 0.78rem; background: #2563eb; color: #fff; text-decoration: none; border-radius: 4px; font-weight: 700;">
+                                            ✏️ Edit
+                                        </a>
+                                        <a href="{{ url_for('land.view_transfer_certificate', transfer_id=req.id) }}" target="_blank" class="btn" style="padding: 0.35rem 0.85rem; font-size: 0.78rem; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; text-decoration: none; border-radius: 4px; font-weight: 600;">
+                                            📄 Approval Certificate 👁️ View
+                                        </a>
+                                    {% elif req.status in ['completed', 'final_registered'] %}
+                                        <a href="{{ url_for('land.view_final_transfer_certificate', transfer_id=req.id) }}" target="_blank" class="btn" style="padding: 0.35rem 0.85rem; font-size: 0.78rem; background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; text-decoration: none; border-radius: 4px; font-weight: 700;">
+                                            📄 Final Certificate 👁️ View
+                                        </a>
+                                    {% else %}
+                                        <span style="font-size: 0.75rem; color: #94a3b8;">N/A</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div style="padding: 1.25rem; text-align: center; color: #64748b; font-weight: 600; background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1;">
+            No records found for this Survey Number.
+        </div>
+    {% endif %}
+</div>
+
+<!-- 8. DOCUMENTS / CERTIFICATES -->
+<div class="section-card" style="margin-bottom: 2rem; padding: 1.5rem;">
+    <div class="card-header-row" style="border-bottom: 2px solid #e2e8f0; padding-bottom: 0.75rem; margin-bottom: 1.25rem;">
+        <h3 style="font-size: 1.2rem; font-weight: 700; color: #1e3a8a; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+            📑 Documents / Certificates
+        </h3>
+    </div>
+    
+    {% set has_docs_or_certs = (documents | length > 0) or (registration_records | selectattr('status', 'in', ['verified', 'approved']) | list | length > 0) or (transfer_requests | selectattr('status', 'in', ['approved', 'completed', 'final_registered']) | list | length > 0) %}
+
+    {% if has_docs_or_certs %}
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+            
+            <!-- Issued Official System Certificates -->
+            <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 1rem;">
+                <h4 style="font-size: 0.95rem; font-weight: 700; color: #334155; margin-bottom: 0.75rem;">
+                    Official Certificates & Documents
+                </h4>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
+                    <!-- Land Registration Certificates -->
+                    {% for land in registration_records %}
+                        {% if land.status in ['verified', 'approved'] %}
+                            <div style="background: #fff; border: 1px solid #bfdbfe; padding: 0.75rem 1rem; border-radius: 6px; display: flex; align-items: center; gap: 1rem;">
+                                <div>
+                                    <strong style="font-size: 0.85rem; color: #1e3a8a; display: block;">Land Registration Certificate</strong>
+                                    <span style="font-size: 0.75rem; color: #64748b;" class="mono">{{ land.certificate_reference }}</span>
+                                </div>
+                                <div>
+                                    <a href="{{ url_for('land.view_land_certificate', land_id=land.id) }}" target="_blank" class="btn" style="padding: 0.3rem 0.75rem; font-size: 0.75rem; background: #2563eb; color: #fff; text-decoration: none; border-radius: 4px; font-weight: 600;">
+                                        📄 Certificate 👁️ View
+                                    </a>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+
+                    <!-- Transfer Approval Certificates -->
+                    {% for req in transfer_requests %}
+                        {% if req.status in ['approved', 'completed', 'final_registered'] %}
+                            <div style="background: #fff; border: 1px solid #bfdbfe; padding: 0.75rem 1rem; border-radius: 6px; display: flex; align-items: center; gap: 1rem;">
+                                <div>
+                                    <strong style="font-size: 0.85rem; color: #1e3a8a; display: block;">Transfer Approval Certificate</strong>
+                                    <span style="font-size: 0.75rem; color: #64748b;" class="mono">{{ req.certificate_reference }}</span>
+                                </div>
+                                <div>
+                                    <a href="{{ url_for('land.view_transfer_certificate', transfer_id=req.id) }}" target="_blank" class="btn" style="padding: 0.3rem 0.75rem; font-size: 0.75rem; background: #2563eb; color: #fff; text-decoration: none; border-radius: 4px; font-weight: 600;">
+                                        📄 Approval Certificate 👁️ View
+                                    </a>
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <!-- Final Certificates -->
+                        {% if req.status in ['completed', 'final_registered'] %}
+                            <div style="background: #fff; border: 1px solid #bbf7d0; padding: 0.75rem 1rem; border-radius: 6px; display: flex; align-items: center; gap: 1rem;">
+                                <div>
+                                    <strong style="font-size: 0.85rem; color: #14532d; display: block;">Final Transfer Certificate</strong>
+                                    <span style="font-size: 0.75rem; color: #64748b;" class="mono">{{ req.final_certificate_reference }}</span>
+                                </div>
+                                <div>
+                                    <a href="{{ url_for('land.view_final_transfer_certificate', transfer_id=req.id) }}" target="_blank" class="btn" style="padding: 0.3rem 0.75rem; font-size: 0.75rem; background: #16a34a; color: #fff; text-decoration: none; border-radius: 4px; font-weight: 600;">
+                                        📄 Final Certificate 👁️ View
+                                    </a>
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <!-- Show Upload button only if request is approved and requires offline document upload -->
+                        {% if req.status == 'approved' and not req.offline_document_path %}
+                            <div style="background: #fff; border: 1px dashed #f59e0b; padding: 0.75rem 1rem; border-radius: 6px; display: flex; align-items: center; gap: 1rem;">
+                                <div>
+                                    <strong style="font-size: 0.85rem; color: #b45309; display: block;">Offline Verification Document Required</strong>
+                                    <span style="font-size: 0.75rem; color: #78350f;">Pending physical document/signature upload</span>
+                                </div>
+                                <div>
+                                    <a href="{{ url_for('land.edit_transfer_request', request_id=req.id) }}" class="btn" style="padding: 0.3rem 0.75rem; font-size: 0.75rem; background: #f59e0b; color: #fff; text-decoration: none; border-radius: 4px; font-weight: 700;">
+                                        📤 Upload
+                                    </a>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Uploaded Documents & Verifications Table -->
+            <div class="table-responsive">
+                <table class="gov-table" style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: #f1f5f9; text-align: left; font-size: 0.8rem; text-transform: uppercase; color: #475569;">
+                            <th style="padding: 0.75rem 1rem;">Document Name / Type</th>
+                            <th style="padding: 0.75rem 1rem;">File Action</th>
+                            <th style="padding: 0.75rem 1rem;">Verification Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for doc in documents %}
+                            <tr style="border-bottom: 1px solid #e2e8f0; font-size: 0.85rem;">
+                                <td style="padding: 0.75rem 1rem; font-weight: 600;">
+                                    <i class="fa-solid fa-file-pdf text-danger"></i> {{ doc.document_type | replace('_', ' ') | title }}
+                                </td>
+                                <td style="padding: 0.75rem 1rem;">
+                                    {% if doc.file_path %}
+                                        <a href="{{ url_for('static', filename=doc.file_path.replace('static/', '')) }}" target="_blank" class="btn" style="padding: 0.25rem 0.6rem; font-size: 0.75rem; background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; border-radius: 4px; text-decoration: none; font-weight: 600;">
+                                            👁️ View Document
+                                        </a>
+                                    {% else %}
+                                        <span style="color: #94a3b8;">No File Path</span>
+                                    {% endif %}
+                                </td>
+                                <td style="padding: 0.75rem 1rem;">
+                                    <span class="status-badge {% if doc.verification_status in ['approved', 'verified'] %}status-verified{% elif doc.verification_status == 'rejected' %}status-flagged{% else %}status-pending{% endif %}" style="font-size: 0.75rem;">
+                                        {{ doc.verification_status | upper }}
+                                    </span>
+                                </td>
+                            </tr>
+                        {% endfor %}
+
+                        {% for land in registration_records %}
+                            {% if land.image_path %}
+                                <tr style="border-bottom: 1px solid #e2e8f0; font-size: 0.85rem;">
+                                    <td style="padding: 0.75rem 1rem; font-weight: 600;">
+                                        <i class="fa-solid fa-image text-primary"></i> Registered Property Photo
+                                    </td>
+                                    <td style="padding: 0.75rem 1rem;">
+                                        <a href="{{ url_for('static', filename=land.image_path.replace('static/', '')) }}" target="_blank" class="btn" style="padding: 0.25rem 0.6rem; font-size: 0.75rem; background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; border-radius: 4px; text-decoration: none; font-weight: 600;">
+                                            👁️ View Photo
+                                        </a>
+                                    </td>
+                                    <td style="padding: 0.75rem 1rem;">
+                                        <span class="status-badge status-verified" style="font-size: 0.75rem;">VERIFIED</span>
+                                    </td>
+                                </tr>
+                            {% endif %}
+                            {% if land.aadhar_path %}
+                                <tr style="border-bottom: 1px solid #e2e8f0; font-size: 0.85rem;">
+                                    <td style="padding: 0.75rem 1rem; font-weight: 600;">
+                                        <i class="fa-solid fa-id-card text-success"></i> Owner Aadhaar Document
+                                    </td>
+                                    <td style="padding: 0.75rem 1rem;">
+                                        <a href="{{ url_for('static', filename=land.aadhar_path.replace('static/', '')) }}" target="_blank" class="btn" style="padding: 0.25rem 0.6rem; font-size: 0.75rem; background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; border-radius: 4px; text-decoration: none; font-weight: 600;">
+                                            👁️ View Aadhaar
+                                        </a>
+                                    </td>
+                                    <td style="padding: 0.75rem 1rem;">
+                                        <span class="status-badge status-verified" style="font-size: 0.75rem;">VERIFIED</span>
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% for req in transfer_requests %}
+                            {% if req.seller_signature_path %}
+                                <tr style="border-bottom: 1px solid #e2e8f0; font-size: 0.85rem;">
+                                    <td style="padding: 0.75rem 1rem; font-weight: 600;">
+                                        Seller Physical Signature File (Ref: {{ req.transfer_ref }})
+                                    </td>
+                                    <td style="padding: 0.75rem 1rem;">
+                                        <a href="{{ url_for('static', filename=req.seller_signature_path.replace('static/', '')) }}" target="_blank" class="btn" style="padding: 0.25rem 0.6rem; font-size: 0.75rem; background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; border-radius: 4px; text-decoration: none; font-weight: 600;">
+                                            👁️ View Signature
+                                        </a>
+                                    </td>
+                                    <td style="padding: 0.75rem 1rem;"><span class="status-badge status-verified" style="font-size: 0.75rem;">OFFLINE VERIFIED</span></td>
+                                </tr>
+                            {% endif %}
+                            {% if req.buyer_signature_path %}
+                                <tr style="border-bottom: 1px solid #e2e8f0; font-size: 0.85rem;">
+                                    <td style="padding: 0.75rem 1rem; font-weight: 600;">
+                                        Buyer Physical Signature File (Ref: {{ req.transfer_ref }})
+                                    </td>
+                                    <td style="padding: 0.75rem 1rem;">
+                                        <a href="{{ url_for('static', filename=req.buyer_signature_path.replace('static/', '')) }}" target="_blank" class="btn" style="padding: 0.25rem 0.6rem; font-size: 0.75rem; background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; border-radius: 4px; text-decoration: none; font-weight: 600;">
+                                            👁️ View Signature
+                                        </a>
+                                    </td>
+                                    <td style="padding: 0.75rem 1rem;"><span class="status-badge status-verified" style="font-size: 0.75rem;">OFFLINE VERIFIED</span></td>
+                                </tr>
+                            {% endif %}
+                            {% if req.offline_document_path %}
+                                <tr style="border-bottom: 1px solid #e2e8f0; font-size: 0.85rem;">
+                                    <td style="padding: 0.75rem 1rem; font-weight: 600;">
+                                        Offline Formalities Document (Ref: {{ req.transfer_ref }})
+                                    </td>
+                                    <td style="padding: 0.75rem 1rem;">
+                                        <a href="{{ url_for('static', filename=req.offline_document_path.replace('static/', '')) }}" target="_blank" class="btn" style="padding: 0.25rem 0.6rem; font-size: 0.75rem; background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; border-radius: 4px; text-decoration: none; font-weight: 600;">
+                                            👁️ View Document
+                                        </a>
+                                    </td>
+                                    <td style="padding: 0.75rem 1rem;"><span class="status-badge status-verified" style="font-size: 0.75rem;">OFFLINE VERIFIED</span></td>
+                                </tr>
+                            {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    {% else %}
+        <div style="padding: 1.25rem; text-align: center; color: #64748b; font-weight: 600; background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1;">
+            No records found for this Survey Number.
+        </div>
+    {% endif %}
+</div>
+
+{% else %}
+
+<!-- Standard Registry Records Listings -->
+<div class="section-card">
+    <div class="card-header-row" style="border-bottom: 1px solid #e2e8f0; padding-bottom: 1rem; margin-bottom: 1.5rem;">
+        <h3><i class="fa-solid fa-database"></i> MySQL Database Registry Records</h3>
+    </div>
+    
+    {% if records %}
+        {% for rec in records %}
+            <div class="record-item" style="border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
+                    <div>
+                        <h4 style="font-size: 1.25rem; color: #1e3a8a; font-weight: 700; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="fa-solid fa-map-location-dot" style="color: #2563eb;"></i> 
+                            <a href="#" onclick="openPropertyDetailsModal({{ rec.info.id }}); return false;" style="color: #1e3a8a; text-decoration: underline;" title="Click to view Land Record Details">
+                                {{ rec.info.survey_number[1:] if rec.info.survey_number.startswith('#') else rec.info.survey_number }}
+                            </a>
+                        </h4>
+                        <span style="font-size: 0.8rem; color: #64748b; font-weight: 600;" class="mono">Property PID: {{ rec.info.pid or ('PID-KA-BLR-2026-' ~ "%06d"|format(rec.info.id)) }}</span>
+                    </div>
+                    
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <span class="status-badge {% if rec.info.status == 'verified' %}status-verified{% elif rec.info.status == 'flagged' %}status-flagged{% else %}status-pending{% endif %}" style="font-size: 0.75rem; padding: 0.3rem 0.75rem;">
+                            Title: {{ (rec.info.status or 'VERIFIED') | upper }}
+                        </span>
+                        <button type="button" class="btn btn-secondary" style="padding: 0.4rem 0.85rem; font-size: 0.8rem; font-weight: 600; color: #2563eb; background: #eff6ff; border-color: #bfdbfe;" onclick="openPropertyDetailsModal({{ rec.info.id }});">
+                            <i class="fa-solid fa-circle-info"></i> View Details
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; border-bottom: 1px solid #f1f5f9; padding-bottom: 1rem;">
+                    <div style="display: flex; flex-direction: column;">
+                        <span style="font-size: 0.72rem; color: #64748b; font-weight: 600; text-transform: uppercase;">Area (sq.m.)</span>
+                        <span style="font-weight: 700; font-size: 0.95rem; color: #1e293b;" class="mono">{{ rec.info.area | int }} sq.m.</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column;">
+                        <span style="font-size: 0.72rem; color: #64748b; font-weight: 600; text-transform: uppercase;">Location / City</span>
+                        <span style="font-weight: 700; font-size: 0.95rem; color: #1e293b;">{{ rec.info.city or rec.info.location or 'Bengaluru' }}</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column;">
+                        <span style="font-size: 0.72rem; color: #64748b; font-weight: 600; text-transform: uppercase;">State</span>
+                        <span style="font-weight: 700; font-size: 0.95rem; color: #334155;">{{ rec.info.state or (rec.info.location.split(',')[1] if ',' in (rec.info.location or '') else 'Karnataka') }}</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column;">
+                        <span style="font-size: 0.72rem; color: #64748b; font-weight: 600; text-transform: uppercase;">Declared Price</span>
+                        <span style="font-weight: 700; font-size: 0.95rem; color: #059669;" class="mono">{{ rec.info.price | currency }}</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column;">
+                        <span style="font-size: 0.72rem; color: #64748b; font-weight: 600; text-transform: uppercase;">Current Registered Owner</span>
+                        <span style="font-weight: 700; font-size: 0.95rem; color: #1e293b; max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            {{ rec.info.owner.username if rec.info.owner else 'Registry Owner' }}
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Ownership History Records inside property record card -->
+                <div style="background: #f8fafc; border-radius: 8px; padding: 1rem; border: 1px solid #f1f5f9;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                        <h5 style="font-size: 0.85rem; font-weight: 700; color: #475569; margin: 0;"><i class="fa-solid fa-timeline" style="color: #2563eb;"></i> Ownership & Transfer Chain Log</h5>
+                        <span style="font-size: 0.75rem; color: #2563eb; font-weight: 600;">Click card to view complete record &rarr;</span>
+                    </div>
+                    <div class="timeline-records" style="display: flex; flex-direction: column; gap: 0.65rem;">
+                        {% for transfer in rec.history %}
+                            <div style="display: flex; gap: 1rem; align-items: flex-start; font-size: 0.8rem; border-left: 2px solid #3b82f6; padding-left: 0.85rem; margin-left: 0.35rem; position: relative;">
+                                <div style="position: absolute; left: -5px; top: 4px; width: 8px; height: 8px; border-radius: 50%; background: #2563eb;"></div>
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 600; color: #1e293b;">
+                                        {% if transfer.previous_owner %}
+                                            From: <strong style="color: #475569;">{{ transfer.previous_owner.username }}</strong> &rarr; To: <strong style="color: #059669;">{{ transfer.new_owner.username }}</strong>
+                                        {% else %}
+                                            Initial Registry Grant by <strong style="color: #059669;">{{ transfer.new_owner.username }}</strong>
+                                        {% endif %}
+                                    </div>
+                                    <div style="font-size: 0.74rem; color: #64748b; margin-top: 0.15rem;">
+                                        Ref: <span style="color: #2563eb; font-weight: 600;" class="mono">{{ transfer.transfer_ref or ('REG-' ~ "%04d"|format(transfer.id)) }}</span> | Transfer Value: <strong style="color: #059669;" class="mono">{{ (transfer.transfer_price or rec.info.price) | currency }}</strong> | Date: {{ transfer.transfer_date.strftime('%d %b %Y, %H:%M') if transfer.transfer_date else (rec.info.created_at.strftime('%d %b %Y, %H:%M') if rec.info.created_at else '29 Jul 2026, 17:44') }}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+        {% include 'components/pagination.html' %}
+    {% else %}
+        <div class="table-empty" style="padding: 4rem 0;">
+            <i class="fa-solid fa-folder-open" style="font-size: 3.5rem; color: #94a3b8;"></i>
+            <p>No matching registry titles found in MySQL database.</p>
+        </div>
+    {% endif %}
+</div>
+
+{% endif %}
+
+{% endblock %}

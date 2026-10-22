@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}Upload Document - Smart Land Registry{% endblock %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 0 auto;">
+    <div class="glass-card">
+        <h2 class="panel-title" style="font-size: 1.5rem;"><i class="fa-solid fa-file-arrow-up"></i> Upload Verification Document</h2>
+        
+        <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-glass); padding: 1.25rem; border-radius: 12px; margin-bottom: 2rem;">
+            <h3 style="font-size: 1.05rem; margin-bottom: 0.5rem; color: var(--accent-cyan);">Target Asset:</h3>
+            <div style="display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.9rem;">
+                <div><strong>Survey Number:</strong> {{ land.survey_number }}</div>
+                <div><strong>Expected Owner:</strong> {{ land.owner.username }}</div>
+                <div><strong>Expected Area:</strong> {{ land.area }} sq ft</div>
+            </div>
+        </div>
+        
+        <form action="{{ url_for('document.upload_document', land_id=land.id) }}" method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="document_type">Document Type</label>
+                <select id="document_type" name="document_type" class="form-control" required>
+                    <option value="title_deed" selected>Title Deed (Deed of Sale / Transfer of Title)</option>
+                    <option value="tax_receipt">Tax Clearance Certificate</option>
+                    <option value="survey_map">Approved Survey Map Layout</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="file">Deed Document File (.txt, .pdf, .png, .jpg)</label>
+                <input type="file" id="file" name="file" class="form-control" required style="padding-top: 0.5rem;">
+            </div>
+            
+            <div style="background: rgba(99, 102, 241, 0.05); border: 1px solid rgba(99, 102, 241, 0.2); padding: 1.25rem; border-radius: 12px; margin-bottom: 2rem;">
+                <h4 style="color: var(--accent-cyan); font-size: 0.9rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem;">
+                    <i class="fa-solid fa-graduation-cap"></i> Tester Instructions (OCR Sandbox)
+                </h4>
+                <p style="color: var(--text-secondary); font-size: 0.8rem; line-height: 1.5;">
+                    To test the <strong>OCR Verification Engine</strong>:
+                </p>
+                <ol style="color: var(--text-secondary); font-size: 0.8rem; padding-left: 1.25rem; margin-top: 0.4rem; display: flex; flex-direction: column; gap: 0.25rem;">
+                    <li>Create a plain text file (e.g. <code>deed.txt</code>).</li>
+                    <li>Write text including:
+                        <br>&bull; The owner username (e.g. <code>{{ land.owner.username }}</code>)
+                        <br>&bull; The survey number (e.g. <code>{{ land.survey_number }}</code>)
+                        <br>&bull; The area size (e.g. <code>{{ land.area }}</code> sq ft)
+                    </li>
+                    <li>Upload the file. The OCR simulator will read it and auto-verify it!</li>
+                    <li><strong>To test failure:</strong> Modify any of the values in the text file and upload it. The OCR will reject it, flag the land, and launch a fraud investigation.</li>
+                </ol>
+            </div>
+            
+            <div style="display: flex; gap: 1rem;">
+                <button type="submit" class="btn btn-primary" style="color: #0a0b10;">
+                    <i class="fa-solid fa-upload"></i> Upload & Run OCR
+                </button>
+                <a href="{{ url_for('land.view_land', land_id=land.id) }}" class="btn btn-secondary">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

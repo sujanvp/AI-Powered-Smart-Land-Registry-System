@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+
+{% block title %}Land Request & Approval - Pending Approvals - Smart Land Registry{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <div class="dashboard-title">
+        <h1>Land Request & Approval — Pending Approvals</h1>
+    </div>
+</div>
+
+<div class="glass-card">
+    <h2 class="panel-title"><i class="fa-solid fa-clock-rotate-left"></i> Land Transfer Approval Queue</h2>
+    
+    <div class="table-wrapper">
+        <table class="custom-table table-transfer-approvals">
+            <thead>
+                <tr>
+                    <th class="col-req-id">Req ID</th>
+                    <th class="col-survey-details">Property Survey #</th>
+                    <th class="col-seller">Current Owner</th>
+                    <th class="col-buyer">New Owner</th>
+                    <th class="col-reason text-center">Reason</th>
+                    <th class="col-docs text-center">Uploaded Title Doc</th>
+                    <th class="col-ocr text-center">OCR Audit Status</th>
+                    <th class="col-fraud text-center">AI Fraud Risk Score</th>
+                    <th class="col-actions text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if pending_items %}
+                    {% for item in pending_items %}
+                        {% set req = item.req %}
+                        {% set land = item.land %}
+                        <tr>
+                            <td class="col-req-id mono">TR-{{ "%04d"|format(req.id) }}</td>
+                            <td class="col-survey-details">
+                                <a href="{{ url_for('land.view_land', land_id=land.id) }}" class="survey-number-link">
+                                    {{ land.survey_number }}
+                                </a>
+                                <div class="survey-subtext">{{ land.city }}, {{ land.state }} ({{ land.area | int }} sqm)</div>
+                            </td>
+                            <td class="col-seller">
+                                <div class="owner-name">{{ req.seller.username if req.seller else (land.owner.username if land.owner else 'Seller') }}</div>
+                                <div class="subtext mono">{{ req.seller_citizen_id or (land.owner.citizen_id if land.owner else '') }}</div>
+                            </td>
+                            <td class="col-buyer">
+                                <div class="buyer-name">{{ req.buyer.username if req.buyer else 'Buyer' }}</div>
+                                <div class="buyer-id subtext mono">{{ req.buyer_citizen_id or (req.buyer.citizen_id if req.buyer else '') }}</div>
+                            </td>
+                            <td class="col-reason text-center">
+                                <span class="status-badge badge-reason">
+                                    {{ req.transfer_reason or 'Sale' }}
+                                </span>
+                            </td>
+                            <td class="col-docs text-center">
+                                {% if item.doc and item.doc.is_file_available %}
+                                    <a href="{{ url_for('document.view_document', doc_id=item.doc.id) }}" target="_blank" class="btn btn-secondary btn-sm-table">
+                                        <i class="fa-solid fa-file-pdf pdf-icon"></i> View Deed File
+                                    </a>
+                                {% else %}
+                                    <span class="btn btn-secondary disabled btn-sm-table btn-unavailable" title="No Physical Deed File Available for This Generated Record">
+                                        <i class="fa-solid fa-file-excel unavailable-icon"></i> Document Not Available
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="col-ocr text-center">
+                                {% if item.doc_status == 'approved' %}
+                                    <span class="status-badge status-verified"><i class="fa-solid fa-check-circle"></i> OCR Valid</span>
+                                {% elif item.doc_status == 'rejected' %}
+                                    <span class="status-badge status-flagged"><i class="fa-solid fa-triangle-exclamation"></i> Discrepancy</span>
+                                {% else %}
+                                    <a href="{{ url_for('land.verification') }}" class="btn btn-secondary btn-sm-table btn-audit">
+                                        <i class="fa-solid fa-file-signature"></i> OCR Scanner
+                                    </a>
+                                {% endif %}
+                            </td>
+                            <td class="col-fraud text-center">
+                                {% if item.fraud_prob > 50 %}
+                                    <span class="status-badge status-flagged font-bold">
+                                        <i class="fa-solid fa-triangle-exclamation"></i> {{ item.fraud_prob }}% High Risk
+                                    </span>
+                                {% elif item.fraud_prob > 25 %}
+                                    <span class="status-badge status-pending">
+                                        <i class="fa-solid fa-triangle-exclamation"></i> {{ item.fraud_prob }}% Med Risk
+                                    </span>
+                                {% else %}
+                                    <span class="status-badge status-verified">
+                                        <i class="fa-solid fa-shield-check"></i> {{ item.fraud_prob }}% Low Risk
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="col-actions text-center">
+                                <div class="action-buttons-group">
+                                    <form action="{{ url_for('land.approve_request', request_id=req.id) }}" method="POST" style="display: inline-block; margin: 0;">
+                                        <button type="submit" class="btn btn-success btn-action-table" onclick="return confirm('Approve this transfer request for offline registration? Transfer Approval Certificate will be generated.');">
+                                            <i class="fa-solid fa-check"></i> Approve
+                                        </button>
+                                    </form>
+                                    <button type="button" class="btn btn-danger btn-action-table" onclick="document.getElementById('rejectModal{{ req.id }}').style.display='flex';">
+                                        <i class="fa-solid fa-xmark"></i> Reject
+                                    </button>
+                                    <form action="{{ url_for('land.flag_request', request_id=req.id) }}" method="POST" style="display: inline-block; margin: 0;">
+                                        <button type="submit" class="btn btn-warning btn-action-table" style="background: #f59e0b; color: #fff; border: none;">
+                                            <i class="fa-solid fa-flag"></i> Flag
+                                        </button>
+                                    </form>
+                                </div>
+
+                                <!-- Rejection Reason Modal -->
+                                <div id="rejectModal{{ req.id }}" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15,23,42,0.6); backdrop-filter: blur(4px); z-index: 9999; align-items: center; justify-content: center; text-align: left;">
+                                    <div style="background: #ffffff; padding: 2rem; border-radius: 14px; max-width: 480px; width: 90%; color: #1e293b; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);">
+                                        <h3 style="margin-top: 0; font-size: 1.2rem; color: #ef4444; display: flex; align-items: center; gap: 0.5rem;"><i class="fa-solid fa-ban"></i> Reject Land Transfer Request</h3>
+                                        <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1rem;">Specify reason for rejecting transfer of Survey #{{ land.survey_number }}:</p>
+                                        <form action="{{ url_for('land.reject_request', request_id=req.id) }}" method="POST">
+                                            <div style="margin-bottom: 0.75rem;">
+                                                <label style="font-size: 0.78rem; font-weight: 600; color: #475569; display: block; margin-bottom: 0.35rem;">Select Preset Reason or Enter Custom:</label>
+                                                <select class="form-control" style="font-size: 0.82rem; margin-bottom: 0.5rem; width: 100%; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.4rem;" onchange="if(this.value && this.value !== 'Other') { document.getElementById('rejectReasonText{{ req.id }}').value = this.value; } else if(this.value === 'Other') { document.getElementById('rejectReasonText{{ req.id }}').value = ''; document.getElementById('rejectReasonText{{ req.id }}').focus(); }">
+                                                    <option value="">-- Select Common Reason --</option>
+                                                    <option value="Document verification failed">Document verification failed</option>
+                                                    <option value="Ownership details mismatch">Ownership details mismatch</option>
+                                                    <option value="OCR verification failed">OCR verification failed</option>
+                                                    <option value="Suspicious/fraudulent transaction detected">Suspicious/fraudulent transaction detected</option>
+                                                    <option value="Invalid property details">Invalid property details</option>
+                                                    <option value="Required document missing">Required document missing</option>
+                                                    <option value="Other">Other</option>
+                                                </select>
+                                            </div>
+                                            <textarea id="rejectReasonText{{ req.id }}" name="rejection_reason" class="form-control" rows="3" required style="width: 100%; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.5rem;"></textarea>
+                                            <div style="display: flex; gap: 0.5rem; margin-top: 1rem; justify-content: flex-end;">
+                                                <button type="button" class="btn btn-secondary" onclick="document.getElementById('rejectModal{{ req.id }}').style.display='none';">Cancel</button>
+                                                <button type="submit" class="btn btn-danger">Confirm Rejection</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="9" class="table-empty" style="text-align: center; color: var(--text-secondary); padding: 3rem 0;">
+                            <i class="fa-solid fa-circle-check" style="font-size: 3rem; color: #10b981; margin-bottom: 1rem; display: block;"></i>
+                            All land transfer requests have been processed! No pending approvals in queue.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+    {% include 'components/pagination.html' %}
+</div>
+{% endblock %}

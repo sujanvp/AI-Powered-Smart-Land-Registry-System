@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+
+{% block title %}AI Fraud Detection - AI Smart Land Registry{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="header-left">
+        <h1>AI Fraud Detection</h1>
+
+    </div>
+</div>
+
+<!-- Grid Layout: Duplicates and Forged Documents -->
+<div class="metrics-grid" style="grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+    <!-- Section 1: Duplicate Land Records Detector -->
+    <div class="section-card" style="margin: 0;">
+        <div class="card-header-row" style="border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem; margin-bottom: 1rem;">
+            <h3 style="font-size: 1.15rem; color: #1e3a8a;"><i class="fa-solid fa-clone"></i> Duplicate Survey Checker</h3>
+        </div>
+        <div class="table-container">
+            <table class="gov-table" style="font-size: 0.85rem;">
+                <thead>
+                    <tr>
+                        <th>Survey Number</th>
+                        <th>PID</th>
+                        <th>Location</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if duplicates %}
+                        {% for land in duplicates %}
+                            <tr>
+                                <td class="mono font-bold" style="color: var(--accent-red);">{{ land.survey_number }}</td>
+                                <td class="mono">{{ land.pid or 'N/A' }}</td>
+                                <td>{{ land.city or land.location }}</td>
+                                <td>
+                                    <span class="status-badge status-flagged">Duplicate</span>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="4" class="table-empty" style="padding: 1.5rem 0;">
+                                <i class="fa-solid fa-circle-check" style="color: #10b981; font-size: 2rem;"></i>
+                                <p>No duplicate survey numbers detected.</p>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Section 2: Forged Document Scanner alerts -->
+    <div class="section-card" style="margin: 0;">
+        <div class="card-header-row" style="border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem; margin-bottom: 1rem;">
+            <h3 style="font-size: 1.15rem; color: #1e3a8a;"><i class="fa-solid fa-file-circle-xmark"></i> Fake Document Flags</h3>
+        </div>
+        <div class="table-container">
+            <table class="gov-table" style="font-size: 0.85rem;">
+                <thead>
+                    <tr>
+                        <th>Document</th>
+                        <th>Land Survey</th>
+                        <th>Discrepancy Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if fake_docs %}
+                        {% for doc in fake_docs %}
+                            <tr>
+                                <td>
+                                    <span style="font-weight: 600; color: #1e293b;">Deed Proof</span>
+                                    <div style="font-size: 0.7rem; color: #64748b;">Hash: {{ doc.hash_value[:8] }}</div>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('land.view_land', land_id=doc.land_id) }}" style="color: #2563eb; font-weight:600;">
+                                        #{{ doc.land.survey_number }}
+                                    </a>
+                                </td>
+                                <td style="color: #ef4444; font-size: 0.8rem; line-height: 1.3;">
+                                    {{ doc.verification_notes }}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="3" class="table-empty" style="padding: 1.5rem 0;">
+                                <i class="fa-solid fa-file-circle-check" style="color: #10b981; font-size: 2rem;"></i>
+                                <p>All documents successfully verified.</p>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Section 3: AI Fraud Alerts logs (Module 4 main panel) -->
+<div class="section-card">
+    <div class="card-header-row" style="border-bottom: 1px solid #e2e8f0; padding-bottom: 1rem; margin-bottom: 1.5rem;">
+        <h3><i class="fa-solid fa-triangle-exclamation"></i> AI/ML Transaction Fraud Logs</h3>
+    </div>
+    
+    <div class="table-container">
+        <table class="gov-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Audit Date</th>
+                    <th>Survey #</th>
+                    <th>Anomaly Risk score</th>
+                    <th>Flagged Factors</th>
+                    <th>AI Security Notes</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if fraud_alerts %}
+                    {% for alert in fraud_alerts %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td style="font-size: 0.8rem; color: #64748b;">{{ alert.reported_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td class="mono font-bold">
+                                <a href="{{ url_for('fraud.audit_details', record_id=alert.id) }}" style="color: #2563eb; cursor: pointer; text-decoration: underline;" title="Click to view Fraud Audit Details">
+                                    {{ alert.land.survey_number }}
+                                </a>
+                            </td>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <span class="status-badge status-flagged" style="font-weight: 700; width: 60px; text-align: center;">
+                                        {{ (alert.risk_score * 100) | int }}%
+                                    </span>
+                                    <!-- Simple progress bar -->
+                                    <div style="flex: 1; background: #e2e8f0; height: 6px; border-radius: 3px; min-width: 60px; overflow: hidden;">
+                                        <div style="--w: {{ alert.risk_score * 100 }}%; background: #ef4444; width: var(--w); height: 100%;"></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td style="font-size: 0.8rem;">
+                                {% for flag in alert.fraud_flags %}
+                                    <span class="status-badge" style="background: #fee2e2; color: #ef4444; border: 1px solid #fca5a5; font-size: 0.65rem; margin-right: 0.25rem;">
+                                        {{ flag }}
+                                    </span>
+                                {% endfor %}
+                            </td>
+                            <td style="font-size: 0.82rem; color: #475569; max-width: 300px; line-height: 1.4;">
+                                {{ alert.ai_feedback }}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('fraud.audit_details', record_id=alert.id) }}" class="btn-action-secondary" style="padding: 0.35rem 0.8rem; font-size: 0.75rem;">
+                                    Audit Details
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7" class="table-empty">
+                            <i class="fa-solid fa-shield-halved"></i>
+                            <p>No transaction anomalies detected by the AI security engine.</p>
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+    {% include 'components/pagination.html' %}
+</div>
+
+{% endblock %}

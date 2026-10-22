@@ -1,0 +1,430 @@
+{% extends 'base.html' %}
+
+{% block title %}FINAL TRANSFER CERTIFICATE - {{ final_cert_ref }} - Smart Land Registry{% endblock %}
+
+{% block content %}
+<style>
+    .cert-wrapper {
+        max-width: 900px;
+        margin: 1.5rem auto;
+        background: #ffffff;
+        border: 12px double #15803d;
+        border-radius: 8px;
+        padding: 3rem 3.5rem;
+        box-shadow: 0 12px 35px rgba(21, 128, 61, 0.12);
+        position: relative;
+        font-family: 'Inter', 'Outfit', sans-serif;
+        color: #0f172a;
+    }
+    
+    .cert-header {
+        text-align: center;
+        border-bottom: 2px solid #15803d;
+        padding-bottom: 1.5rem;
+        margin-bottom: 2rem;
+        position: relative;
+    }
+    
+    .cert-emblem {
+        font-size: 3.2rem;
+        color: #15803d;
+        margin-bottom: 0.5rem;
+    }
+    
+    .cert-govt-title {
+        font-size: 0.95rem;
+        font-weight: 800;
+        letter-spacing: 2px;
+        color: #475569;
+        text-transform: uppercase;
+        margin-bottom: 0.25rem;
+    }
+    
+    .cert-main-title {
+        font-size: 2.1rem;
+        font-weight: 900;
+        color: #15803d;
+        margin: 0.25rem 0;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .cert-sub-title {
+        font-size: 0.95rem;
+        color: #1e3a8a;
+        font-weight: 700;
+        margin-top: 0.25rem;
+    }
+    
+    .cert-badge-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #f0fdf4;
+        border: 1px solid #86efac;
+        padding: 0.85rem 1.35rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+        font-size: 0.85rem;
+    }
+    
+    .cert-ref-number {
+        font-family: monospace;
+        font-weight: 700;
+        color: #15803d;
+    }
+    
+    .cert-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.25rem 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .cert-field {
+        border-bottom: 1px solid #e2e8f0;
+        padding-bottom: 0.5rem;
+    }
+    
+    .cert-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.2rem;
+    }
+    
+    .cert-value {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+    
+    .legal-notice-box {
+        background: #f0fdf4;
+        border-left: 5px solid #15803d;
+        padding: 1rem 1.25rem;
+        border-radius: 6px;
+        font-size: 0.88rem;
+        color: #166534;
+        line-height: 1.55;
+        margin-top: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .offline-verified-box {
+        background: #f8fafc;
+        border: 2px dashed #86efac;
+        border-radius: 8px;
+        padding: 1.25rem;
+        margin-bottom: 2rem;
+    }
+
+    .offline-verified-title {
+        font-size: 0.95rem;
+        font-weight: 800;
+        color: #15803d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 0;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .offline-verified-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem 2rem;
+        font-size: 0.88rem;
+    }
+
+    .cert-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px dashed #cbd5e1;
+    }
+    
+    .cert-seal-round {
+        width: 130px;
+        height: 130px;
+        border: 4px double #15803d;
+        border-radius: 50%;
+        background: radial-gradient(circle, #ffffff 55%, #f0fdf4 100%);
+        box-shadow: inset 0 0 0 2px #4ade80, 0 4px 12px rgba(22, 128, 61, 0.15);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        color: #15803d;
+        padding: 0.5rem;
+        box-sizing: border-box;
+    }
+
+    .cert-seal-round .seal-govt {
+        font-size: 0.52rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        color: #15803d;
+        line-height: 1.1;
+    }
+
+    .cert-seal-round .seal-icon {
+        font-size: 1.4rem;
+        color: #15803d;
+        margin: 0.15rem 0;
+    }
+
+    .cert-seal-round .seal-main {
+        font-size: 0.62rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #15803d;
+    }
+
+    .cert-seal-round .seal-sub {
+        font-size: 0.48rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #475569;
+    }
+    
+    .cert-signature {
+        text-align: center;
+    }
+    
+    .signature-line {
+        width: 220px;
+        border-bottom: 1.5px solid #0f172a;
+        margin: 0 auto 0.4rem auto;
+    }
+
+    .action-bar {
+        max-width: 900px;
+        margin: 0 auto 1.5rem auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    @media print {
+        body * {
+            visibility: hidden;
+        }
+        .cert-wrapper, .cert-wrapper * {
+            visibility: visible;
+        }
+        .cert-wrapper {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            border: 8px double #15803d !important;
+            box-shadow: none !important;
+        }
+        .action-bar, .app-sidebar, .app-top-nav, .alert-container {
+            display: none !important;
+        }
+    }
+</style>
+
+<div class="action-bar">
+    <div>
+        <a href="{{ url_for('land.transfer_requests') }}" class="btn-action-secondary" style="text-decoration: none;">
+            <i class="fa-solid fa-arrow-left"></i> Back to Transfer Requests
+        </a>
+    </div>
+    <div style="display: flex; gap: 0.75rem;">
+        <a href="{{ url_for('land.view_transfer_certificate', transfer_id=req.id) }}" target="_blank" class="btn-action-secondary" style="text-decoration: none;">
+            <i class="fa-solid fa-file-contract"></i> View Transfer Approval Certificate
+        </a>
+        <button onclick="window.print()" class="btn-action-secondary" style="cursor: pointer;">
+            <i class="fa-solid fa-print"></i> Print PDF
+        </button>
+        <a href="{{ url_for('land.download_final_transfer_certificate', transfer_id=req.id) }}" class="btn-action-primary" style="text-decoration: none; color: #fff; background: #15803d; border-color: #15803d;">
+            <i class="fa-solid fa-download"></i> Download PDF
+        </a>
+    </div>
+</div>
+
+<div class="cert-wrapper">
+    <div class="cert-header">
+        <div class="cert-emblem"><i class="fa-solid fa-award"></i></div>
+        <div class="cert-govt-title">DEPARTMENT OF REVENUE &amp; LAND RECORDS</div>
+        <h1 class="cert-main-title">FINAL TRANSFER CERTIFICATE</h1>
+        <div class="cert-sub-title">ORIGINAL TRANSFER CERTIFICATE — OFFICIAL TITLE DEED &amp; COMPLETED OWNERSHIP RECORD</div>
+    </div>
+    
+    <div class="cert-badge-row">
+        <div>
+            <span style="color: #64748b; font-weight: 600;">Final Certificate Ref:</span>
+            <span class="cert-ref-number">{{ final_cert_ref }}</span>
+        </div>
+        <div>
+            <span class="status-badge status-verified" style="font-size: 0.85rem; padding: 0.4rem 1rem; background: #dcfce7; color: #15803d; border-color: #86efac; font-weight: 800;">
+                <i class="fa-solid fa-check-double"></i> {{ final_status }}
+            </span>
+        </div>
+        <div>
+            <span style="color: #64748b; font-weight: 600;">Final Registration Date:</span>
+            <strong>{{ final_registration_date }}</strong>
+        </div>
+    </div>
+    
+    <div class="cert-grid">
+        <div class="cert-field">
+            <div class="cert-label">Final Certificate Number</div>
+            <div class="cert-value" style="color: #15803d; font-family: monospace;">{{ final_cert_ref }}</div>
+        </div>
+
+        <div class="cert-field">
+            <div class="cert-label">Transfer Reference Number</div>
+            <div class="cert-value" style="color: #1e3a8a; font-family: monospace;">{{ transfer_ref }}</div>
+        </div>
+
+        <div class="cert-field">
+            <div class="cert-label">Survey Number</div>
+            <div class="cert-value" style="color: #1e3a8a; font-family: monospace;">{{ land.survey_number }}</div>
+        </div>
+        
+        <div class="cert-field">
+            <div class="cert-label">Property PID</div>
+            <div class="cert-value" style="font-family: monospace;">{{ pid }}</div>
+        </div>
+
+        <div class="cert-field" style="background: #f8fafc; padding: 0.75rem; border-radius: 6px;">
+            <div class="cert-label">Previous Owner / Seller</div>
+            <div class="cert-value">{{ seller_name }}</div>
+            <div style="font-size: 0.75rem; color: #64748b;">Citizen ID: {{ seller_citizen_id }}</div>
+        </div>
+
+        <div class="cert-field" style="background: #f0fdf4; padding: 0.75rem; border-radius: 6px;">
+            <div class="cert-label">New Owner / Buyer</div>
+            <div class="cert-value" style="color: #15803d;">{{ buyer_name }}</div>
+            <div style="font-size: 0.75rem; color: #15803d;">Citizen ID: {{ buyer_citizen_id }}</div>
+        </div>
+
+        <div class="cert-field">
+            <div class="cert-label">Transfer Reason</div>
+            <div class="cert-value">{{ transfer_reason }}</div>
+        </div>
+
+        <div class="cert-field">
+            <div class="cert-label">Property Location</div>
+            <div class="cert-value">{{ location }}</div>
+        </div>
+
+        <div class="cert-field">
+            <div class="cert-label">Area</div>
+            <div class="cert-value">{{ area_formatted }}</div>
+        </div>
+
+        <div class="cert-field">
+            <div class="cert-label">Declared Value</div>
+            <div class="cert-value" style="color: #059669;">{{ declared_value_formatted }}</div>
+        </div>
+
+        <div class="cert-field">
+            <div class="cert-label">Online Approval Date</div>
+            <div class="cert-value" style="font-size: 0.95rem;">{{ online_approval_date }}</div>
+        </div>
+
+        <div class="cert-field">
+            <div class="cert-label">Offline Registration Date</div>
+            <div class="cert-value" style="font-size: 0.95rem; color: #15803d;">{{ offline_registration_date }}</div>
+        </div>
+
+        <div class="cert-field">
+            <div class="cert-label">Final Registration Date</div>
+            <div class="cert-value" style="font-size: 0.95rem; color: #15803d;">{{ final_registration_date }}</div>
+        </div>
+
+        <div class="cert-field">
+            <div class="cert-label">Registration Office</div>
+            <div class="cert-value">{{ registration_office }}</div>
+        </div>
+
+        <div class="cert-field">
+            <div class="cert-label">Revenue Officer / Registering Officer Name</div>
+            <div class="cert-value">{{ registering_officer_name }}</div>
+        </div>
+
+        <div class="cert-field">
+            <div class="cert-label">Officer ID</div>
+            <div class="cert-value" style="font-family: monospace;">{{ registering_officer_id }}</div>
+        </div>
+    </div>
+
+    <!-- Offline Verification Audit Box -->
+    <div class="offline-verified-box">
+        <h3 class="offline-verified-title">
+            <i class="fa-solid fa-circle-check"></i> Physical &amp; Document Verification Completed
+        </h3>
+        <div class="offline-verified-grid">
+            <div>
+                <span style="color: #64748b; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; display: block;">Verification Remarks</span>
+                <strong>{{ verification_remarks }}</strong>
+            </div>
+            <div>
+                <span style="color: #64748b; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; display: block;">Physical Signatures &amp; IDs Verified</span>
+                <span style="color: #15803d; font-weight: 700;">Seller &amp; Buyer Signatures, Original Title Deeds Verified</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Official Legal Declaration Notice -->
+    <div class="legal-notice-box">
+        “This document certifies that the land transfer has been fully verified, executed, and legally registered following mandatory offline physical verification, document checks, and physical signature verifications. Title ownership is officially updated in the State Land Registry to the New Owner.”
+    </div>
+
+    <div class="cert-footer">
+        <!-- 1. Official Registry Seal -->
+        <div style="text-align: center;">
+            <div class="cert-seal-round">
+                <div class="seal-govt">STATE LAND REGISTRY</div>
+                <div class="seal-icon"><i class="fa-solid fa-stamp"></i></div>
+                <div class="seal-main">OFFICIAL SEAL</div>
+                <div class="seal-sub">DEPT. OF REVENUE</div>
+            </div>
+        </div>
+
+        <!-- 2. QR Verification Code -->
+        <div style="text-align: center;">
+            <div style="font-size: 0.75rem; font-weight: 700; color: #15803d; margin-bottom: 0.3rem;">
+                <i class="fa-solid fa-qrcode"></i> QR Verification Code
+            </div>
+            <div style="border: 2px solid #cbd5e1; padding: 0.35rem; background: #fff; display: inline-block; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                {% if qr_base64 %}
+                <a href="{{ qr_url }}" target="_blank" title="Scan or click to verify final certificate online">
+                    <img src="data:image/png;base64,{{ qr_base64 }}" width="90" height="90" alt="QR Code Verification" style="display: block;">
+                </a>
+                {% else %}
+                <i class="fa-solid fa-qrcode" style="font-size: 3rem; color: #15803d;"></i>
+                {% endif %}
+            </div>
+            <div style="font-size: 0.68rem; font-weight: 700; color: #64748b; margin-top: 0.3rem;" class="mono">
+                <a href="{{ qr_url }}" target="_blank" style="color: #15803d; text-decoration: underline;">{{ final_cert_ref }}</a>
+            </div>
+        </div>
+
+        <!-- 3. Authorized Officer Signature -->
+        <div class="cert-signature">
+            <div style="font-size: 0.72rem; color: #15803d; font-weight: 800; margin-bottom: 0.35rem;">
+                <i class="fa-solid fa-check-double"></i> Officially Signed &amp; Approved
+            </div>
+            <div class="signature-line"></div>
+            <div style="font-size: 0.88rem; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px;">{{ registering_officer_name }}</div>
+            <div style="font-size: 0.82rem; font-weight: 700; color: #15803d;">Revenue Officer / Registering Officer (ID: {{ registering_officer_id }})</div>
+            <div style="font-size: 0.72rem; font-weight: 600; color: #64748b;">Department of Revenue &amp; Land Records</div>
+        </div>
+    </div>
+</div>
+{% endblock %}

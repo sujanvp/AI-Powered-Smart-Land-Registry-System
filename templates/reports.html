@@ -1,0 +1,375 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard & Reports - AI Smart Land Registry System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="header-left">
+        <h1>Admin Dashboard & Reports</h1>
+    </div>
+</div>
+
+<!-- Stats Overview Row -->
+<div class="metrics-grid">
+    <div class="metric-card card-blue">
+        <div class="card-icon"><i class="fa-solid fa-file-invoice"></i></div>
+        <div class="card-data">
+            <span class="card-label">Total Assets Registered</span>
+            <h3 class="card-value">{{ total_lands }}</h3>
+        </div>
+    </div>
+    
+    <div class="metric-card card-indigo">
+        <div class="card-icon"><i class="fa-solid fa-shield-check"></i></div>
+        <div class="card-data">
+            <span class="card-label">Deeds Verified (OCR)</span>
+            <h3 class="card-value">{{ approved_documents }}</h3>
+        </div>
+    </div>
+    
+    <div class="metric-card card-amber">
+        <div class="card-icon"><i class="fa-solid fa-clock"></i></div>
+        <div class="card-data">
+            <span class="card-label">Pending Verifications</span>
+            <h3 class="card-value">{{ pending_documents }}</h3>
+        </div>
+    </div>
+
+    <div class="metric-card card-red" style="border-left: 4px solid #ef4444; background: #fff;">
+        <div class="card-icon" style="color: #ef4444;"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <div class="card-data">
+            <span class="card-label">Flagged High-Risk Titles</span>
+            <h3 class="card-value" style="color: #ef4444;">{{ flagged_lands }}</h3>
+        </div>
+    </div>
+</div>
+
+<div class="metrics-grid" style="grid-template-columns: 2fr 3fr; gap: 1.5rem; margin-top: 2rem; align-items: start;">
+    <!-- Left Column: Custom Report Exporter Form -->
+    <div class="section-card" style="margin: 0;">
+        <div class="card-header-row" style="border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem; margin-bottom: 1.25rem;">
+            <h3 style="color: #1e3a8a; font-size: 1.15rem; font-weight: 700;">
+                <i class="fa-solid fa-file-export" style="color: #2563eb;"></i> Custom Report Exporter
+            </h3>
+        </div>
+        
+        <form id="report-config-form" onsubmit="event.preventDefault(); simulateReportGeneration();" style="display: flex; flex-direction: column; gap: 1.25rem;">
+            
+            <!-- 1. Report Category -->
+            <div class="form-element" style="display: flex; flex-direction: column; gap: 0.35rem;">
+                <label for="report_type" style="font-weight: 700; font-size: 0.85rem; color: #334155;">
+                    Report Category <span style="color: #ef4444;">*</span>
+                </label>
+                <select id="report_type" class="gov-input" required style="padding: 0.6rem 0.75rem; font-size: 0.88rem; border: 1px solid #cbd5e1; border-radius: 6px; width: 100%;">
+                    <option value="User Management">User Management</option>
+                    <option value="Land Registration">Land Registration</option>
+                    <option value="Document Verification (OCR)">Document Verification (OCR)</option>
+                    <option value="AI Fraud Detection">AI Fraud Detection</option>
+                    <option value="Land Request & Approval">Land Request & Approval</option>
+                    <option value="Property Price Prediction">Property Price Prediction</option>
+                    <option value="Land Records & Ownership">Land Records & Ownership</option>
+                    <option value="Admin Dashboard & Reports">Admin Dashboard & Reports</option>
+                </select>
+            </div>
+            
+            <!-- 2. Export Format -->
+            <div class="form-element" style="display: flex; flex-direction: column; gap: 0.35rem;">
+                <label for="export_format" style="font-weight: 700; font-size: 0.85rem; color: #334155;">
+                    Export Format <span style="color: #ef4444;">*</span>
+                </label>
+                <select id="export_format" class="gov-input" required style="padding: 0.6rem 0.75rem; font-size: 0.88rem; border: 1px solid #cbd5e1; border-radius: 6px; width: 100%;">
+                    <option value="Adobe PDF (.pdf)">Adobe PDF (.pdf)</option>
+                    <option value="Excel (.xlsx)">Excel (.xlsx)</option>
+                    <option value="CSV (.csv)">CSV (.csv)</option>
+                </select>
+            </div>
+
+            <!-- 3. Date Scope -->
+            <div class="form-element" style="display: flex; flex-direction: column; gap: 0.35rem;">
+                <label for="date_range" style="font-weight: 700; font-size: 0.85rem; color: #334155;">
+                    Date Scope <span style="color: #ef4444;">*</span>
+                </label>
+                <select id="date_range" class="gov-input" required onchange="toggleCustomDateFields()" style="padding: 0.6rem 0.75rem; font-size: 0.88rem; border: 1px solid #cbd5e1; border-radius: 6px; width: 100%;">
+                    <option value="Today (Last 24 Hours)">Today (Last 24 Hours)</option>
+                    <option value="Last 7 Days">Last 7 Days</option>
+                    <option value="Last 30 Days">Last 30 Days</option>
+                    <option value="This Year">This Year</option>
+                    <option value="Custom Date Range">Custom Date Range</option>
+                </select>
+            </div>
+
+            <!-- 4. Custom Date Range (Conditional) -->
+            <div id="custom-date-container" style="display: none; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; margin-top: -0.25rem;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-element" style="display: flex; flex-direction: column; gap: 0.35rem;">
+                        <label for="from_date" style="font-weight: 700; font-size: 0.8rem; color: #475569;">From Date</label>
+                        <input type="date" id="from_date" class="gov-input" style="padding: 0.5rem; font-size: 0.85rem; border: 1px solid #cbd5e1; border-radius: 6px; width: 100%;">
+                    </div>
+                    <div class="form-element" style="display: flex; flex-direction: column; gap: 0.35rem;">
+                        <label for="to_date" style="font-weight: 700; font-size: 0.8rem; color: #475569;">To Date</label>
+                        <input type="date" id="to_date" class="gov-input" style="padding: 0.5rem; font-size: 0.85rem; border: 1px solid #cbd5e1; border-radius: 6px; width: 100%;">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 5. Generate System Report Button -->
+            <button type="submit" id="btn-export" class="btn-action-primary" style="width: 100%; justify-content: center; font-size: 0.95rem; font-weight: 700; padding: 0.75rem; color: #fff; background: #1e3a8a; border-color: #1e3a8a; margin-top: 0.5rem; cursor: pointer;">
+                <i class="fa-solid fa-arrows-spin" id="spinner-export" style="display: none; margin-right: 0.5rem;"></i>
+                <i class="fa-solid fa-file-export" id="icon-export" style="margin-right: 0.5rem;"></i>
+                <span id="text-export">Generate System Report</span>
+            </button>
+        </form>
+
+        <!-- 6. Success Message Box after Generation -->
+        <div id="export-success-message" style="display: none; margin-top: 1.25rem; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 10px; padding: 1.1rem 1.25rem; color: #065f46;">
+            <div style="display: flex; align-items: center; gap: 0.5rem; font-weight: 800; font-size: 0.95rem; color: #047857; margin-bottom: 0.75rem; border-bottom: 1px dashed #6ee7b7; padding-bottom: 0.5rem;">
+                <i class="fa-solid fa-circle-check" style="font-size: 1.1rem;"></i> Report Generated Successfully!
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 0.45rem; font-size: 0.85rem; margin-bottom: 1rem;">
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="font-weight: 600; color: #047857;">Report Name:</span>
+                    <span id="res-report-name" class="mono font-bold" style="color: #064e3b;"></span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="font-weight: 600; color: #047857;">Report Category:</span>
+                    <span id="res-report-category" style="color: #064e3b; font-weight: 600;"></span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="font-weight: 600; color: #047857;">Date Range:</span>
+                    <span id="res-date-range" style="color: #064e3b;"></span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="font-weight: 600; color: #047857;">File Format:</span>
+                    <span id="res-file-format" style="color: #064e3b; font-weight: 700;"></span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="font-weight: 600; color: #047857;">Generated Date & Time:</span>
+                    <span id="res-generated-time" class="mono" style="color: #064e3b;"></span>
+                </div>
+            </div>
+
+            <button id="btn-download-success" onclick="" class="btn-action-primary" style="width: 100%; justify-content: center; padding: 0.65rem; font-size: 0.88rem; font-weight: 700; background: #047857; border-color: #065f46; color: #fff; cursor: pointer;">
+                <i class="fa-solid fa-download" style="margin-right: 0.4rem;"></i> Download Report
+            </button>
+        </div>
+    </div>
+
+    <!-- Right Column: Available Reports Queue -->
+    <div class="section-card" style="margin: 0;">
+        <div class="card-header-row" style="border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem; margin-bottom: 1.25rem;">
+            <h3 style="color: #1e3a8a;"><i class="fa-solid fa-folder-open"></i> Available Reports Queue</h3>
+        </div>
+
+        <div class="table-container">
+            <table class="gov-table" style="font-size: 0.85rem;">
+                <thead>
+                    <tr>
+                        <th>Report ID</th>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Generated On</th>
+                        <th>Status</th>
+                        <th style="text-align: right;">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="reports-table-body">
+                    {% for report in reports_list %}
+                        <tr id="row-{{ report.id }}">
+                            <td class="mono font-bold" style="color: #475569;">{{ report.id }}</td>
+                            <td style="font-weight: 600;">{{ report.name }}</td>
+                            <td>
+                                <span class="status-badge" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; font-size: 0.7rem;">
+                                    {{ report.type }}
+                                </span>
+                            </td>
+                            <td>{{ report.date }}</td>
+                            <td id="status-cell-{{ report.id }}">
+                                <span class="status-badge status-verified" style="font-size: 0.7rem;">
+                                    {{ report.status }}
+                                </span>
+                            </td>
+                            <td style="text-align: right;">
+                                <button onclick="downloadRealReport('{{ report.id }}', '{{ report.name }}', '{{ report.type }}', this)" class="btn-action-primary" style="padding: 0.4rem 0.85rem; font-size: 0.78rem; color: #fff; background: #1e3a8a; border-color: #1e3a8a; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem;">
+                                    <i class="fa-solid fa-download"></i> Download
+                                </button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function toggleCustomDateFields() {
+        const dateRangeSelect = document.getElementById('date_range');
+        const customContainer = document.getElementById('custom-date-container');
+        if (dateRangeSelect.value === 'Custom Date Range') {
+            customContainer.style.display = 'block';
+        } else {
+            customContainer.style.display = 'none';
+        }
+    }
+
+    async function downloadRealReport(reportId, reportName, formatType, btnEl, category, dateScope) {
+        const originalHtml = btnEl.innerHTML;
+        btnEl.disabled = true;
+        btnEl.style.opacity = '0.75';
+        btnEl.innerHTML = `<i class="fa-solid fa-arrows-spin fa-spin" style="margin-right: 0.35rem;"></i> Generating Report...`;
+
+        const statusCell = document.getElementById('status-cell-' + reportId);
+
+        try {
+            let url = `/admin/reports/download/${reportId}?format=${encodeURIComponent(formatType.toLowerCase())}`;
+            if (category) url += `&category=${encodeURIComponent(category)}`;
+            if (dateScope) url += `&date_scope=${encodeURIComponent(dateScope)}`;
+
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error('Report generation server error HTTP ' + response.status);
+            }
+
+            const blob = await response.blob();
+            let filename = `${reportId}_${reportName.replace(/[^a-zA-Z0-9]/g, '_')}.${formatType.toLowerCase()}`;
+
+            const disposition = response.headers.get('Content-Disposition');
+            if (disposition && disposition.indexOf('filename=') !== -1) {
+                const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(disposition);
+                if (matches && matches[1]) {
+                    filename = matches[1].replace(/['"]/g, '');
+                }
+            }
+
+            const downloadUrl = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = downloadUrl;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(downloadUrl);
+
+            btnEl.disabled = false;
+            btnEl.style.opacity = '1';
+            btnEl.innerHTML = `<i class="fa-solid fa-download"></i> Download`;
+
+            if (statusCell) {
+                statusCell.innerHTML = `<span class="status-badge status-verified" style="font-size: 0.7rem;"><i class="fa-solid fa-check"></i> Report generated successfully.</span>`;
+            }
+        } catch (err) {
+            console.error('Report download error:', err);
+            btnEl.disabled = false;
+            btnEl.style.opacity = '1';
+            btnEl.innerHTML = `<i class="fa-solid fa-download"></i> Download`;
+
+            if (statusCell) {
+                statusCell.innerHTML = `<span class="status-badge status-flagged" style="font-size: 0.7rem; background: #fee2e2; color: #dc2626;"><i class="fa-solid fa-circle-xmark"></i> Unable to generate report. Please try again.</span>`;
+            } else {
+                alert("Unable to generate report. Please try again.");
+            }
+        }
+    }
+
+    function simulateReportGeneration() {
+        const btn = document.getElementById('btn-export');
+        const spinner = document.getElementById('spinner-export');
+        const icon = document.getElementById('icon-export');
+        const text = document.getElementById('text-export');
+        const successMsg = document.getElementById('export-success-message');
+        const tableBody = document.getElementById('reports-table-body');
+        
+        const categoryVal = document.getElementById('report_type').value;
+        const formatVal = document.getElementById('export_format').value;
+        const dateScopeVal = document.getElementById('date_range').value;
+        
+        let dateRangeText = dateScopeVal;
+        if (dateScopeVal === 'Custom Date Range') {
+            const fromDate = document.getElementById('from_date').value || 'Start';
+            const toDate = document.getElementById('to_date').value || 'End';
+            dateRangeText = `${fromDate} to ${toDate}`;
+        }
+        
+        btn.disabled = true;
+        btn.style.opacity = '0.7';
+        spinner.style.display = 'inline-block';
+        icon.style.display = 'none';
+        text.innerText = 'Compiling System Data...';
+        successMsg.style.display = 'none';
+        
+        setTimeout(() => {
+            text.innerText = 'Formatting System Report...';
+            
+            setTimeout(() => {
+                const now = new Date();
+                const timestampStr = now.toISOString().replace(/[-:T.]/g, '').slice(0, 14);
+                const formattedDateTime = now.getFullYear() + '-' +
+                    String(now.getMonth() + 1).padStart(2, '0') + '-' +
+                    String(now.getDate()).padStart(2, '0') + ' ' +
+                    String(now.getHours()).padStart(2, '0') + ':' +
+                    String(now.getMinutes()).padStart(2, '0') + ':' +
+                    String(now.getSeconds()).padStart(2, '0');
+
+                let ext = 'pdf';
+                if (formatVal.includes('.xlsx') || formatVal.includes('Excel')) ext = 'xlsx';
+                else if (formatVal.includes('.csv') || formatVal.includes('CSV')) ext = 'csv';
+
+                const cleanCategoryName = categoryVal.replace(/[^a-zA-Z0-9]/g, '_');
+                const reportName = `REP_${cleanCategoryName}_${timestampStr}.${ext}`;
+                const randomId = 'REP-2026-' + Math.floor(100 + Math.random() * 900);
+                const todayStr = now.toISOString().split('T')[0];
+
+                document.getElementById('res-report-name').innerText = reportName;
+                document.getElementById('res-report-category').innerText = categoryVal;
+                document.getElementById('res-date-range').innerText = dateRangeText;
+                document.getElementById('res-file-format').innerText = formatVal;
+                document.getElementById('res-generated-time').innerText = formattedDateTime;
+                
+                const dlBtn = document.getElementById('btn-download-success');
+                dlBtn.onclick = function() {
+                    downloadRealReport(randomId, categoryVal, ext, dlBtn, categoryVal, dateRangeText);
+                };
+
+                const newRow = document.createElement('tr');
+                newRow.id = `row-${randomId}`;
+                newRow.innerHTML = `
+                    <td class="mono font-bold" style="color: #475569;">${randomId}</td>
+                    <td style="font-weight: 600;">${categoryVal}</td>
+                    <td>
+                        <span class="status-badge" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; font-size: 0.7rem;">
+                            ${ext.toUpperCase()}
+                        </span>
+                    </td>
+                    <td>${todayStr}</td>
+                    <td id="status-cell-${randomId}">
+                        <span class="status-badge status-verified" style="font-size: 0.7rem;">
+                            Ready
+                        </span>
+                    </td>
+                    <td style="text-align: right;">
+                        <button onclick="downloadRealReport('${randomId}', '${categoryVal}', '${ext}', this, '${categoryVal}', '${dateRangeText}')" class="btn-action-primary" style="padding: 0.4rem 0.85rem; font-size: 0.78rem; color: #fff; background: #1e3a8a; border-color: #1e3a8a; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem;">
+                            <i class="fa-solid fa-download"></i> Download
+                        </button>
+                    </td>
+                `;
+                
+                if (tableBody) {
+                    tableBody.insertBefore(newRow, tableBody.firstChild);
+                }
+                
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                spinner.style.display = 'none';
+                icon.style.display = 'inline-block';
+                text.innerText = 'Generate System Report';
+                successMsg.style.display = 'block';
+            }, 600);
+        }, 600);
+    }
+</script>
+{% endblock %}
+
+

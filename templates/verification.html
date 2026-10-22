@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block title %}Document Verification (OCR) - AI Smart Land Registry System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="header-left">
+        <h1>Document Verification (OCR)</h1>
+
+    </div>
+</div>
+
+<div class="section-card">
+    <div class="card-header-row" style="border-bottom: 1px solid #e2e8f0; padding-bottom: 1rem; margin-bottom: 1.5rem;">
+        <h3><i class="fa-solid fa-file-signature"></i> Tesseract OCR Structural Document Audits</h3>
+    </div>
+    
+    <div class="table-container">
+        <table class="gov-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Document Info</th>
+                    <th>Associated Land</th>
+                    <th>File SHA-256 Hash</th>
+                    <th>OCR Audit Status</th>
+                    <th>Tesseract OCR Extracted Notes</th>
+                    <th>Deed File</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if documents %}
+                    {% for doc in documents %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>
+                                <div style="font-weight: 600; color: #1e293b;">
+                                    {% if doc.document_type == 'title_deed' %}Title Deed Certificate{% else %}{{ doc.document_type | replace('_', ' ') | title }}{% endif %}
+                                </div>
+                                <div>
+                                    {% if doc.is_file_available %}
+                                        <span class="status-badge" style="background: rgba(16, 185, 129, 0.1); color: #059669; border: 1px solid rgba(16, 185, 129, 0.2); font-size: 0.7rem; padding: 0.15rem 0.4rem; display: inline-block; margin-top: 0.2rem;"><i class="fa-solid fa-cloud-arrow-up"></i> Uploaded Document</span>
+                                    {% else %}
+                                        <span class="status-badge" style="background: rgba(100, 116, 139, 0.1); color: #64748b; border: 1px solid rgba(100, 116, 139, 0.2); font-size: 0.7rem; padding: 0.15rem 0.4rem; display: inline-block; margin-top: 0.2rem;"><i class="fa-solid fa-database"></i> Generated Test Record</span>
+                                    {% endif %}
+                                </div>
+                                <span style="font-size: 0.72rem; color: #64748b;">Uploaded {{ doc.uploaded_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('land.view_land', land_id=doc.land_id) }}" style="color: #2563eb; font-weight: 600;">
+                                    Survey #{{ doc.land.survey_number }}
+                                </a>
+                            </td>
+                            <td class="mono" style="font-size: 0.75rem;" title="{{ doc.hash_value }}">
+                                {{ doc.hash_value[:10] }}...{{ doc.hash_value[-10:] }}
+                            </td>
+                            <td>
+                                <span class="status-badge {% if doc.verification_status == 'approved' %}status-verified{% elif doc.verification_status == 'rejected' %}status-flagged{% else %}status-pending{% endif %}">
+                                    {{ doc.verification_status | upper }}
+                                </span>
+                            </td>
+                            <td style="font-size: 0.85rem; color: #475569; max-width: 320px; line-height: 1.4;">
+                                {{ doc.verification_notes or 'Pending OCR structural scan.' }}
+                            </td>
+                            <td>
+                                {% if doc.is_file_available %}
+                                    <a href="{{ url_for('document.view_document', doc_id=doc.id) }}" target="_blank" class="btn-action-secondary" style="padding: 0.3rem 0.75rem; font-size: 0.75rem;">
+                                        <i class="fa-solid fa-file-pdf"></i> View Deed File
+                                    </a>
+                                {% else %}
+                                    <span class="btn-action-secondary disabled" style="padding: 0.3rem 0.75rem; font-size: 0.75rem; opacity: 0.65; cursor: not-allowed; background: #f1f5f9; color: #94a3b8; border: 1px solid #cbd5e1; display: inline-block;" title="No Physical Deed File Available for This Generated Record">
+                                        <i class="fa-solid fa-file-excel" style="color: #94a3b8;"></i> Document Not Available
+                                    </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7" class="table-empty">
+                            <i class="fa-solid fa-file-shield"></i>
+                            <p>No document verification records found in your directory.</p>
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+    {% include 'components/pagination.html' %}
+</div>
+
+
+{% endblock %}

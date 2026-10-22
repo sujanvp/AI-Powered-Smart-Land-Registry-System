@@ -1,0 +1,202 @@
+{% extends 'base.html' %}
+
+{% block title %}Land Request & Approval - Registration Approvals - Smart Land Registry{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <div class="dashboard-title">
+        <h1>Land Request & Approval — Registration Approvals</h1>
+    </div>
+</div>
+
+<div class="glass-card">
+    <h2 class="panel-title"><i class="fa-solid fa-house-circle-check"></i> Citizen Land Registration Requests</h2>
+    
+    <div class="table-wrapper" style="overflow-x: auto; width: 100%; border-radius: 8px; border: 1px solid #e2e8f0; margin-top: 1rem;">
+        <table class="custom-table table-registration-approvals" style="width: 100%; min-width: 1780px; border-collapse: collapse; table-layout: fixed;">
+            <thead>
+                <tr style="background: #f8fafc; border-bottom: 2px solid #cbd5e1;">
+                    <th class="col-reg-id" style="padding: 0.85rem 1rem; font-size: 0.75rem; font-weight: 700; color: #475569; text-transform: uppercase; vertical-align: middle;">Reg Request ID</th>
+                    <th class="col-survey" style="padding: 0.85rem 1rem; font-size: 0.75rem; font-weight: 700; color: #475569; text-transform: uppercase; vertical-align: middle;">Survey #</th>
+                    <th class="col-owner" style="padding: 0.85rem 1rem; font-size: 0.75rem; font-weight: 700; color: #475569; text-transform: uppercase; vertical-align: middle;">Citizen / Owner</th>
+                    <th class="col-location" style="padding: 0.85rem 1rem; font-size: 0.75rem; font-weight: 700; color: #475569; text-transform: uppercase; vertical-align: middle;">Location</th>
+                    <th class="col-area" style="padding: 0.85rem 1rem; font-size: 0.75rem; font-weight: 700; color: #475569; text-transform: uppercase; vertical-align: middle;">Land Area</th>
+                    <th class="col-value text-right" style="padding: 0.85rem 1rem; font-size: 0.75rem; font-weight: 700; color: #475569; text-transform: uppercase; text-align: right; vertical-align: middle;">Declared Value</th>
+                    <th class="col-docs text-center" style="padding: 0.85rem 1rem; font-size: 0.75rem; font-weight: 700; color: #475569; text-transform: uppercase; text-align: center; vertical-align: middle;">Uploaded Documents</th>
+                    <th class="col-ocr text-center" style="padding: 0.85rem 1rem; font-size: 0.75rem; font-weight: 700; color: #475569; text-transform: uppercase; text-align: center; vertical-align: middle;">OCR Verification</th>
+                    <th class="col-fraud text-center" style="padding: 0.85rem 1rem; font-size: 0.75rem; font-weight: 700; color: #475569; text-transform: uppercase; text-align: center; vertical-align: middle;">AI Fraud Risk</th>
+                    <th class="col-date" style="padding: 0.85rem 1rem; font-size: 0.75rem; font-weight: 700; color: #475569; text-transform: uppercase; vertical-align: middle;">Submitted Date</th>
+                    <th class="col-status text-center" style="padding: 0.85rem 1rem; font-size: 0.75rem; font-weight: 700; color: #475569; text-transform: uppercase; text-align: center; vertical-align: middle;">Status</th>
+                    <th class="col-actions text-center" style="padding: 0.85rem 1rem; font-size: 0.75rem; font-weight: 700; color: #475569; text-transform: uppercase; text-align: center; vertical-align: middle;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if registration_items %}
+                    {% for item in registration_items %}
+                        {% set land = item.land %}
+                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                            <!-- Reg Request ID -->
+                            <td class="col-reg-id mono" style="padding: 0.85rem 1rem; font-weight: 700; color: #2563eb; font-size: 0.82rem; word-break: break-word; vertical-align: middle;">
+                                REG-{{ "%04d"|format(land.id) }}
+                            </td>
+
+                            <!-- Survey # & Property PID -->
+                            <td class="col-survey" style="padding: 0.85rem 1rem; vertical-align: middle; word-break: break-word;">
+                                <a href="{{ url_for('land.view_land', land_id=land.id) }}" class="survey-number-link" style="color: #1e3a8a; font-weight: 700; font-size: 0.85rem; text-decoration: underline; display: inline-block; word-break: break-word; white-space: normal;" title="View Survey {{ land.survey_number }} Details">
+                                    {{ land.survey_number }}
+                                </a>
+                                {% if land.pid %}
+                                    <div class="pid-subtext mono" style="font-size: 0.72rem; color: #64748b; margin-top: 0.25rem; display: block; word-break: break-word; white-space: normal;">PID: {{ land.pid }}</div>
+                                {% endif %}
+                            </td>
+
+                            <!-- Citizen / Owner -->
+                            <td class="col-owner" style="padding: 0.85rem 1rem; vertical-align: middle; word-break: break-word;">
+                                <div class="owner-name" style="font-weight: 600; color: #0f172a; font-size: 0.85rem; word-break: break-word;">{{ land.owner.username if land.owner else 'Unknown' }}</div>
+                                <div class="subtext mono" style="font-size: 0.72rem; color: #64748b; margin-top: 0.15rem;">{{ land.owner.citizen_id if land.owner else '' }}</div>
+                            </td>
+
+                            <!-- Location -->
+                            <td class="col-location" style="padding: 0.85rem 1rem; vertical-align: middle; word-break: break-word;">
+                                <div class="location-text" style="font-size: 0.82rem; color: #334155; word-break: break-word; line-height: 1.35;">{{ land.location or (land.city ~ ', ' ~ land.state) }}</div>
+                            </td>
+
+                            <!-- Land Area -->
+                            <td class="col-area mono" style="padding: 0.85rem 1rem; vertical-align: middle; font-size: 0.85rem; color: #475569; white-space: nowrap;">
+                                {{ land.area | int }} sqm
+                            </td>
+
+                            <!-- Declared Value -->
+                            <td class="col-value text-right" style="padding: 0.85rem 1rem; vertical-align: middle; text-align: right; white-space: nowrap;">
+                                <strong class="value-text" style="color: #059669; font-weight: 700; font-size: 0.88rem; font-family: monospace;">{{ land.price | currency }}</strong>
+                            </td>
+
+                            <!-- Uploaded Documents -->
+                            <td class="col-docs text-center" style="padding: 0.85rem 1rem; vertical-align: middle; text-align: center; white-space: nowrap;">
+                                {% if item.doc and item.doc.is_file_available %}
+                                    <a href="{{ url_for('document.view_document', doc_id=item.doc.id) }}" target="_blank" class="btn btn-secondary btn-sm-table" style="padding: 0.3rem 0.65rem; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 0.3rem; text-decoration: none;">
+                                        <i class="fa-solid fa-file-pdf pdf-icon" style="color: #ef4444;"></i> View Deed File
+                                    </a>
+                                {% else %}
+                                    <span class="btn btn-secondary disabled btn-sm-table btn-unavailable" style="padding: 0.3rem 0.65rem; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 0.3rem; opacity: 0.65; cursor: not-allowed; background: #f1f5f9; color: #94a3b8; border: 1px solid #cbd5e1;" title="No Physical Deed File Available for This Generated Record">
+                                        <i class="fa-solid fa-file-excel unavailable-icon" style="color: #94a3b8;"></i> Document Not Available
+                                    </span>
+                                {% endif %}
+                            </td>
+
+                            <!-- OCR Verification -->
+                            <td class="col-ocr text-center" style="padding: 0.85rem 1rem; vertical-align: middle; text-align: center; white-space: nowrap;">
+                                {% if item.doc_status == 'approved' %}
+                                    <span class="status-badge status-verified" style="font-size: 0.72rem; padding: 0.2rem 0.55rem;"><i class="fa-solid fa-check-circle"></i> Verified</span>
+                                {% elif item.doc_status == 'rejected' %}
+                                    <span class="status-badge status-flagged" style="font-size: 0.72rem; padding: 0.2rem 0.55rem;" title="{{ item.doc_notes }}"><i class="fa-solid fa-triangle-exclamation"></i> Discrepancy</span>
+                                {% else %}
+                                    <a href="{{ url_for('land.verification') }}" class="btn btn-secondary btn-sm-table btn-audit" style="padding: 0.3rem 0.65rem; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 0.3rem; text-decoration: none; color: #2563eb; background: #eff6ff; border: 1px solid #bfdbfe;">
+                                        <i class="fa-solid fa-file-signature"></i> Audit OCR
+                                    </a>
+                                {% endif %}
+                            </td>
+
+                            <!-- AI Fraud Risk -->
+                            <td class="col-fraud text-center" style="padding: 0.85rem 1rem; vertical-align: middle; text-align: center; white-space: nowrap;">
+                                {% if item.fraud_prob > 50 %}
+                                    <span class="status-badge status-flagged font-bold" style="font-size: 0.72rem; padding: 0.2rem 0.55rem;">
+                                        <i class="fa-solid fa-triangle-exclamation"></i> {{ item.fraud_prob }}% High Risk
+                                    </span>
+                                {% elif item.fraud_prob > 25 %}
+                                    <span class="status-badge status-pending" style="font-size: 0.72rem; padding: 0.2rem 0.55rem;">
+                                        <i class="fa-solid fa-triangle-exclamation"></i> {{ item.fraud_prob }}% Med Risk
+                                    </span>
+                                {% else %}
+                                    <span class="status-badge status-verified" style="font-size: 0.72rem; padding: 0.2rem 0.55rem;">
+                                        <i class="fa-solid fa-shield-check"></i> {{ item.fraud_prob }}% Low Risk
+                                    </span>
+                                {% endif %}
+                            </td>
+
+                            <!-- Submitted Date -->
+                            <td class="col-date mono subtext" style="padding: 0.85rem 1rem; vertical-align: middle; font-size: 0.78rem; color: #475569; white-space: nowrap;">
+                                {{ land.created_at.strftime('%Y-%m-%d %H:%M') if land.created_at else 'N/A' }}
+                            </td>
+
+                            <!-- Status -->
+                            <td class="col-status text-center" style="padding: 0.85rem 1rem; vertical-align: middle; text-align: center; white-space: nowrap;">
+                                {% if land.status == 'verified' %}
+                                    <span class="status-badge status-verified" style="font-size: 0.72rem; padding: 0.2rem 0.55rem;"><i class="fa-solid fa-circle-check"></i> Approved</span>
+                                {% elif land.status == 'rejected' %}
+                                    <span class="status-badge status-flagged" style="font-size: 0.72rem; padding: 0.2rem 0.55rem; cursor: pointer;" onclick="openRejectionModal('registration', {{ land.id }})" title="Click to view Rejection Details"><i class="fa-solid fa-circle-xmark"></i> Rejected</span>
+                                {% elif land.status == 'flagged' %}
+                                    <span class="status-badge status-pending badge-flagged" style="font-size: 0.72rem; padding: 0.2rem 0.55rem;"><i class="fa-solid fa-flag"></i> Flagged</span>
+                                {% else %}
+                                    <span class="status-badge status-pending" style="font-size: 0.72rem; padding: 0.2rem 0.55rem;"><i class="fa-solid fa-clock"></i> Pending Audit</span>
+                                {% endif %}
+                            </td>
+                            <td class="col-actions text-center">
+                                <div class="action-buttons-group">
+                                    {% if land.status != 'verified' %}
+                                        <form action="{{ url_for('land.approve_registration', land_id=land.id) }}" method="POST" style="display: inline-block; margin: 0;">
+                                            <button type="submit" class="btn btn-success btn-action-table" onclick="return confirm('Approve this land registration? Official Land Record & Ownership will be created.');">
+                                                <i class="fa-solid fa-check"></i> Approve
+                                            </button>
+                                        </form>
+                                    {% endif %}
+
+                                    {% if land.status != 'rejected' %}
+                                        <button type="button" class="btn btn-danger btn-action-table" onclick="document.getElementById('rejectRegModal{{ land.id }}').style.display='flex';">
+                                            <i class="fa-solid fa-xmark"></i> Reject
+                                        </button>
+                                    {% endif %}
+
+                                    {% if land.status != 'flagged' %}
+                                        <form action="{{ url_for('land.flag_registration', land_id=land.id) }}" method="POST" style="display: inline-block; margin: 0;">
+                                            <button type="submit" class="btn btn-warning btn-action-table" style="background: #f59e0b; color: #fff; border: none;">
+                                                <i class="fa-solid fa-flag"></i> Flag
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Rejection Reason Modal -->
+                                <div id="rejectRegModal{{ land.id }}" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15,23,42,0.6); backdrop-filter: blur(4px); z-index: 9999; align-items: center; justify-content: center; text-align: left;">
+                                    <div style="background: #ffffff; padding: 2rem; border-radius: 14px; max-width: 480px; width: 90%; color: #1e293b; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);">
+                                        <h3 style="margin-top: 0; font-size: 1.2rem; color: #ef4444; display: flex; align-items: center; gap: 0.5rem;"><i class="fa-solid fa-ban"></i> Reject Land Registration</h3>
+                                        <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1rem;">Specify rejection reason for Survey #{{ land.survey_number }} (Citizen: {{ land.owner.username if land.owner else 'N/A' }}):</p>
+                                        <form action="{{ url_for('land.reject_registration', land_id=land.id) }}" method="POST">
+                                            <div style="margin-bottom: 0.75rem;">
+                                                <label style="font-size: 0.78rem; font-weight: 600; color: #475569; display: block; margin-bottom: 0.35rem;">Select Preset Reason or Enter Custom:</label>
+                                                <select class="form-control" style="font-size: 0.82rem; margin-bottom: 0.5rem; width: 100%; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.4rem;" onchange="if(this.value && this.value !== 'Other') { document.getElementById('rejectRegReasonText{{ land.id }}').value = this.value; } else if(this.value === 'Other') { document.getElementById('rejectRegReasonText{{ land.id }}').value = ''; document.getElementById('rejectRegReasonText{{ land.id }}').focus(); }">
+                                                    <option value="">-- Select Common Reason --</option>
+                                                    <option value="Document verification failed">Document verification failed</option>
+                                                    <option value="Ownership details mismatch">Ownership details mismatch</option>
+                                                    <option value="OCR verification failed">OCR verification failed</option>
+                                                    <option value="Suspicious/fraudulent transaction detected">Suspicious/fraudulent transaction detected</option>
+                                                    <option value="Invalid property details">Invalid property details</option>
+                                                    <option value="Required document missing">Required document missing</option>
+                                                    <option value="Other">Other</option>
+                                                </select>
+                                            </div>
+                                            <textarea id="rejectRegReasonText{{ land.id }}" name="rejection_reason" class="form-control" rows="3" required style="width: 100%; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.5rem;"></textarea>
+                                            <div style="display: flex; gap: 0.5rem; margin-top: 1rem; justify-content: flex-end;">
+                                                <button type="button" class="btn btn-secondary" onclick="document.getElementById('rejectRegModal{{ land.id }}').style.display='none';">Cancel</button>
+                                                <button type="submit" class="btn btn-danger">Confirm Rejection</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="12" class="table-empty" style="text-align: center; color: var(--text-secondary); padding: 3rem 0;">
+                            <i class="fa-solid fa-circle-check" style="font-size: 3rem; color: #10b981; margin-bottom: 1rem; display: block;"></i>
+                            No land registration requests in the registry queue.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+    {% include 'components/pagination.html' %}
+</div>
+{% endblock %}

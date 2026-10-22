@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Land - AI Smart Land Registry{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto;">
+    <div class="section-card">
+        <div class="card-header-row" style="border-bottom: 1px solid #e2e8f0; padding-bottom: 1rem; margin-bottom: 1.5rem;">
+            <h3><i class="fa-solid fa-edit"></i> Edit Property Details</h3>
+        </div>
+        
+        <form id="edit-land-form" action="{{ url_for('land.edit_land', land_id=land.id) }}" method="POST" enctype="multipart/form-data">
+            <div class="form-grid">
+                <div class="form-element">
+                    <label for="area">Area (in sqm.)</label>
+                    <input type="number" id="area" name="area" class="gov-input" value="{{ land.area | int }}" required>
+                </div>
+                
+                <div class="form-element">
+                    <label for="city">City</label>
+                    <input type="text" id="city" name="city" class="gov-input" value="{{ land.city or land.location.split(',')[0] }}" required>
+                </div>
+                
+                <div class="form-element">
+                    <label for="state">State</label>
+                    <input type="text" id="state" name="state" class="gov-input" value="{{ land.state or 'Maharashtra' }}" required>
+                </div>
+                
+                <div class="form-element">
+                    <label for="price">Price (Value in $)</label>
+                    <input type="number" id="price" name="price" class="gov-input" value="{{ land.price | int }}" required>
+                </div>
+                
+                <div class="form-element">
+                    <label for="pid">Property PID Number</label>
+                    <input type="text" id="pid" name="pid" class="gov-input" value="{{ land.pid or '' }}" required>
+                </div>
+                
+                <div class="form-element">
+                    <label for="survey_number">Physical Survey Number</label>
+                    <input type="text" id="survey_number" name="survey_number" class="gov-input" value="{{ land.survey_number }}" required>
+                </div>
+            </div>
+            
+            <div class="form-element" style="margin-top: 1rem;">
+                <label for="land_image">Update Land Image (Optional)</label>
+                <input type="file" id="land_image" name="land_image" class="gov-file-input" accept="image/*">
+                {% if land.image_path %}
+                    <p style="font-size: 0.8rem; color: #64748b; margin-top: 0.25rem;">Current file: {{ land.image_path.split('\\')[-1] }}</p>
+                {% endif %}
+            </div>
+            
+            <div class="form-element" style="margin-top: 1rem;">
+                <label for="aadhar_document">Update Deed/Aadhar card document (Optional)</label>
+                <input type="file" id="aadhar_document" name="aadhar_document" class="gov-file-input" accept=".pdf,.png,.jpg,.jpeg">
+                {% if land.aadhar_path %}
+                    <p style="font-size: 0.8rem; color: #64748b; margin-top: 0.25rem;">Current file: {{ land.aadhar_path.split('\\')[-1] }}</p>
+                {% endif %}
+            </div>
+            
+            <div style="display: flex; gap: 1rem; margin-top: 2rem; border-top: 1px solid #e2e8f0; padding-top: 1.5rem;">
+                <button type="submit" class="btn-action-primary" style="font-size: 1rem; padding: 0.75rem 2.5rem; color: #fff;">
+                    Save Changes
+                </button>
+                <a href="{{ url_for('land.owned_lands') }}" class="btn-action-secondary" style="padding: 0.75rem 2rem;">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,291 @@
+{% extends 'base.html' %}
+
+{% block title %}Property Details - {{ land.survey_number }}{% endblock %}
+
+{% block content %}
+<div class="property-details-page-wrapper" style="display: flex; flex-direction: column; gap: 1.75rem; max-width: 1100px; margin: 0 auto;">
+
+    <!-- 1. PROPERTY HEADER -->
+    <div class="dashboard-header" style="margin-bottom: 0.5rem;">
+        <div class="dashboard-title">
+            <h1 style="display: flex; align-items: center; gap: 0.75rem; font-size: 1.75rem; font-weight: 800; color: #0f172a;">
+                Property Details
+            </h1>
+            <div style="display: flex; align-items: center; gap: 1rem; margin-top: 0.35rem; font-size: 0.95rem;">
+                <span style="color: #475569; font-weight: 600;">Survey Number: <strong class="mono" style="color: #1e3a8a;">{{ land.survey_number }}</strong></span>
+                <span style="color: #cbd5e1;">|</span>
+                <span style="color: #475569; font-weight: 600;">Status: <span class="status-badge status-{{ land.status }}">{{ land.status | upper }}</span></span>
+            </div>
+        </div>
+        <div style="display: flex; gap: 0.75rem; align-items: center;">
+            <a href="{{ url_for('land.records') }}" class="btn btn-secondary" style="font-weight: 600;">
+                <i class="fa-solid fa-arrow-left"></i> Back to Land Records
+            </a>
+            <a href="{{ url_for('land.dashboard') }}" class="btn btn-secondary">
+                <i class="fa-solid fa-gauge"></i> Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- 2. PROPERTY INFORMATION -->
+    <div class="glass-card">
+        <h2 class="panel-title"><i class="fa-solid fa-house-chimney"></i> Property Information</h2>
+        <div class="prop-info-grid">
+            <div class="prop-info-row">
+                <span class="prop-info-label">Property PID:</span>
+                <span class="prop-info-value mono">{{ land.pid or 'N/A' }}</span>
+            </div>
+            <div class="prop-info-row">
+                <span class="prop-info-label">Current Owner:</span>
+                <span class="prop-info-value owner-highlight">{{ land.owner.username if land.owner else 'Unknown' }}</span>
+            </div>
+            <div class="prop-info-row">
+                <span class="prop-info-label">Owner Citizen ID:</span>
+                <span class="prop-info-value mono">{{ land.owner.citizen_id if (land.owner and land.owner.citizen_id) else 'N/A' }}</span>
+            </div>
+            <div class="prop-info-row">
+                <span class="prop-info-label">Surveyed Area:</span>
+                <span class="prop-info-value mono">{{ land.area }} sq ft</span>
+            </div>
+            <div class="prop-info-row">
+                <span class="prop-info-label">Location / City:</span>
+                <span class="prop-info-value">{{ land.city or land.location }}</span>
+            </div>
+            <div class="prop-info-row">
+                <span class="prop-info-label">State:</span>
+                <span class="prop-info-value">{{ land.state or 'N/A' }}</span>
+            </div>
+            <div class="prop-info-row" style="grid-column: 1 / -1; border-top: 1px solid #e2e8f0; padding-top: 0.75rem; margin-top: 0.25rem;">
+                <span class="prop-info-label" style="font-size: 0.9rem;">Declared Value:</span>
+                <span class="prop-info-value price-highlight" style="font-size: 1.15rem;">{{ land.price | currency }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. AI RISK ASSESSMENT — SEPARATE SECTION -->
+    <div class="glass-card risk-level-{{ risk_level | lower }}">
+        <h2 class="panel-title"><i class="fa-solid fa-shield-halved"></i> AI Risk Assessment</h2>
+        
+        <div class="risk-info-layout">
+            <div class="risk-score-box">
+                <div class="risk-score-val">{{ risk_score }}%</div>
+                <div class="risk-level-tag risk-badge-{{ risk_level | lower }}">
+                    {{ risk_level | upper }} RISK
+                </div>
+            </div>
+            <div class="risk-indicators-box">
+                <div class="risk-indicators-title">Risk Indicators:</div>
+                {% if risk_factors %}
+                    <ul class="risk-indicators-list">
+                        {% for factor in risk_factors %}
+                            <li><i class="fa-solid fa-circle-dot" style="font-size: 0.55rem; color: #ef4444;"></i> {{ factor }}</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <div class="risk-clean-message" style="margin-top: 0.25rem;">
+                        <i class="fa-solid fa-check-circle"></i> Title integrity fully verified. No anomaly or fraud risk detected.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if fraud_records %}
+            <div style="margin-top: 1.25rem; border-top: 1px solid #fee2e2; padding-top: 1rem;">
+                <div style="color: #ef4444; font-weight: 700; font-size: 0.85rem; margin-bottom: 0.5rem; text-transform: uppercase;">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Active AI Fraud Audit Flags
+                </div>
+                {% for fraud in fraud_records %}
+                    <div style="background: rgba(239, 68, 68, 0.04); border: 1px solid rgba(239, 68, 68, 0.2); padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 0.5rem;">
+                        <div style="display: flex; justify-content: space-between; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">
+                            <span>Audit Alert #{{ fraud.id }}</span>
+                            <span class="status-badge status-flagged" style="font-size: 0.65rem;">{{ fraud.status }}</span>
+                        </div>
+                        <div style="font-size: 0.82rem; color: #475569; margin-bottom: 0.25rem;">
+                            <strong>Flags:</strong> {{ fraud.fraud_flags | join(', ') }}
+                        </div>
+                        <p style="font-size: 0.8rem; font-style: italic; color: #dc2626; margin: 0;">
+                            {{ fraud.ai_feedback }}
+                        </p>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- 4. OWNERSHIP HISTORY -->
+    <div class="glass-card">
+        <h2 class="panel-title"><i class="fa-solid fa-timeline"></i> Ownership History</h2>
+        
+        {% if history %}
+            <div class="timeline-vertical-container">
+                {% for transfer in history %}
+                    <div class="timeline-item-block">
+                        <div class="timeline-marker-dot marker-success"></div>
+                        <div class="timeline-card-box">
+                            <div class="timeline-header-row">
+                                <span class="timeline-year-badge">{{ transfer.transfer_date.strftime('%Y') }}</span>
+                                <span class="timeline-ref mono">
+                                    {% if transfer.previous_owner %}Transfer Ref: {{ transfer.transfer_ref }}{% else %}Registration Ref: {{ transfer.transfer_ref }}{% endif %}
+                                </span>
+                            </div>
+                            <div class="timeline-details-rows">
+                                {% if transfer.previous_owner %}
+                                    <div><span class="detail-label">Previous Owner:</span> <strong>{{ transfer.previous_owner.username }}</strong></div>
+                                    <div><span class="detail-label">New Owner:</span> <strong style="color: #2563eb;">{{ transfer.new_owner.username }}</strong></div>
+                                    <div><span class="detail-label">Transfer Ref:</span> <span class="mono">{{ transfer.transfer_ref }}</span></div>
+                                    <div><span class="detail-label">Status:</span> <span class="status-badge status-verified" style="font-size: 0.7rem;">Approved</span></div>
+                                {% else %}
+                                    <div><span class="detail-label">Original Owner:</span> <strong style="color: #1e3a8a;">{{ transfer.new_owner.username }}</strong></div>
+                                    <div><span class="detail-label">Registration Ref:</span> <span class="mono">{{ transfer.transfer_ref }}</span></div>
+                                    <div><span class="detail-label">Status:</span> <span class="status-badge status-verified" style="font-size: 0.7rem;">Initial Registration</span></div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p style="color: #64748b; text-align: center; padding: 1.5rem 0;">No ownership history records logged.</p>
+        {% endif %}
+    </div>
+
+    <!-- 5. TRANSFER HISTORY -->
+    <div class="glass-card">
+        <h2 class="panel-title"><i class="fa-solid fa-clock-rotate-left"></i> Transfer History</h2>
+        
+        {% set requests_list = land.requests | sort(attribute='created_at', reverse=True) if land.requests else [] %}
+        {% if requests_list %}
+            <div class="timeline-vertical-container">
+                {% for req in requests_list %}
+                    <div class="timeline-item-block">
+                        <div class="timeline-marker-dot {% if req.status == 'approved' %}marker-success{% elif req.status == 'rejected' %}marker-danger{% else %}marker-warning{% endif %}"></div>
+                        <div class="timeline-card-box">
+                            <div class="timeline-header-row">
+                                <span class="timeline-ref mono" style="font-size: 0.9rem; font-weight: 800; color: #1e3a8a;">TRF-{{ "%04d"|format(req.id) }}</span>
+                                <span class="status-badge {% if req.status == 'approved' %}status-verified{% elif req.status == 'rejected' %}status-flagged{% else %}status-pending{% endif %}">
+                                    {% if req.status == 'approved' %}Approved{% elif req.status == 'rejected' %}Rejected{% else %}Pending{% endif %}
+                                </span>
+                            </div>
+                            <div class="transfer-details-rows">
+                                <div><span class="detail-label">Transfer Ref:</span> <span class="mono bold">TRF-{{ "%04d"|format(req.id) }}</span></div>
+                                <div><span class="detail-label">Survey Number:</span> <span class="mono bold" style="color: #1e3a8a;">{{ land.survey_number }}</span></div>
+                                <div><span class="detail-label">Property PID:</span> <span class="mono">{{ land.pid or 'N/A' }}</span></div>
+                                <div><span class="detail-label">Current Owner:</span> <strong>{{ req.seller.username if req.seller else (land.owner.username if land.owner else 'Seller') }}</strong></div>
+                                <div><span class="detail-label">New Owner:</span> <strong style="color: #2563eb;">{{ req.buyer.username if req.buyer else 'Buyer' }}</strong></div>
+                                <div><span class="detail-label">Reason:</span> <span>{{ req.transfer_reason or 'Sale' }}</span></div>
+                                <div><span class="detail-label">Value:</span> <span class="price-text">{{ (req.bid_price or land.price) | currency }}</span></div>
+                                <div><span class="detail-label">Transfer Date:</span> <span class="mono subtext">{{ req.created_at.strftime('%Y-%m-%d %H:%M') if req.created_at else 'N/A' }}</span></div>
+                                <div><span class="detail-label">Status:</span> <span class="status-badge {% if req.status == 'approved' %}status-verified{% elif req.status == 'rejected' %}status-flagged{% else %}status-pending{% endif %}" style="font-size: 0.7rem;">{{ req.status | capitalize }}</span></div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p style="color: #64748b; text-align: center; padding: 1.5rem 0;">No property transfer requests logged.</p>
+        {% endif %}
+    </div>
+
+    <!-- 6. ML PRICE PREDICTION -->
+    <div class="glass-card">
+        <h2 class="panel-title"><i class="fa-solid fa-chart-line"></i> Property Price Prediction</h2>
+        
+        {% if prediction %}
+            <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+                <div>
+                    <div style="color: #64748b; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700;">Estimated Fair Market Value</div>
+                    <div style="font-size: 2.2rem; font-weight: 800; color: #2563eb; line-height: 1.2;">
+                        {{ prediction.predicted_price | currency }}
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; background: #f8fafc; padding: 1rem 1.25rem; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <div>
+                        <div style="font-size: 0.75rem; color: #64748b; font-weight: 600;">Conservative Estimate</div>
+                        <div style="font-size: 1.05rem; font-weight: 700; color: #334155;">
+                            {{ prediction.low_estimate | currency }}
+                        </div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.75rem; color: #64748b; font-weight: 600;">Aggressive Estimate</div>
+                        <div style="font-size: 1.05rem; font-weight: 700; color: #334155;">
+                            {{ prediction.high_estimate | currency }}
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #f1f5f9; padding-top: 0.75rem;">
+                    <span style="font-size: 0.85rem; color: #64748b; font-weight: 600;">AI Model Confidence Score (R²):</span>
+                    <span class="status-badge status-verified">{{ prediction.confidence_score | int }}% Accuracy</span>
+                </div>
+            </div>
+        {% else %}
+            <p style="color: #64748b; text-align: center; padding: 1.25rem 0;">No pricing valuation model cached for this property.</p>
+        {% endif %}
+    </div>
+
+    <!-- 7. OCR SUPPORTING DOCUMENTS -->
+    <div class="glass-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.75rem;">
+            <h2 class="panel-title" style="margin: 0; border: none; padding: 0;"><i class="fa-solid fa-file-invoice"></i> OCR Supporting Documents</h2>
+            {% if current_user.role in ['citizen', 'admin'] and (land.owner_id == current_user.id or current_user.role == 'admin') %}
+                <a href="{{ url_for('document.upload_document', land_id=land.id) }}" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; border-radius: 6px;">
+                    <i class="fa-solid fa-plus"></i> Upload Deed
+                </a>
+            {% endif %}
+        </div>
+        
+        {% if land.documents %}
+            <div class="table-wrapper" style="margin-top: 0;">
+                <table class="custom-table" style="min-width: 100%;">
+                    <thead>
+                        <tr>
+                            <th style="width: 45%;">Document Name</th>
+                            <th style="width: 25%; text-align: center;">OCR Status</th>
+                            <th style="width: 30%; text-align: center;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for doc in land.documents %}
+                            <tr>
+                                <td>
+                                    <strong style="font-size: 0.9rem; color: #0f172a;">📄 {{ doc.document_type.replace('_', ' ') | title }}</strong>
+                                    {% if doc.verification_notes %}
+                                        <div style="font-size: 0.75rem; color: #64748b; margin-top: 0.15rem;">{{ doc.verification_notes }}</div>
+                                    {% endif %}
+                                </td>
+                                <td style="text-align: center;">
+                                    {% if doc.verification_status == 'approved' %}
+                                        <span class="status-badge status-verified" style="font-size: 0.72rem;"><i class="fa-solid fa-check-circle"></i> VERIFIED</span>
+                                    {% elif doc.verification_status == 'rejected' %}
+                                        <span class="status-badge status-flagged" style="font-size: 0.72rem;"><i class="fa-solid fa-triangle-exclamation"></i> DISCREPANCY</span>
+                                    {% else %}
+                                        <span class="status-badge status-pending" style="font-size: 0.72rem;"><i class="fa-solid fa-clock"></i> PENDING</span>
+                                    {% endif %}
+                                </td>
+                                <td style="text-align: center;">
+                                    {% if doc.is_file_available %}
+                                        <a href="{{ url_for('document.view_document', doc_id=doc.id) }}" target="_blank" class="btn btn-secondary btn-sm-table">
+                                            <i class="fa-solid fa-eye" style="color: #2563eb;"></i> View Document
+                                        </a>
+                                    {% else %}
+                                        <span class="btn btn-secondary disabled btn-sm-table btn-unavailable" title="No Physical File Uploaded">
+                                            <i class="fa-solid fa-file-excel"></i> File Not Available
+                                        </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div style="text-align: center; color: #64748b; padding: 1.75rem 0;">
+                <i class="fa-solid fa-file-circle-question" style="font-size: 2.2rem; margin-bottom: 0.5rem; color: #cbd5e1;"></i>
+                <p style="font-size: 0.88rem; font-weight: 500;">No title deed documents uploaded yet.</p>
+            </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

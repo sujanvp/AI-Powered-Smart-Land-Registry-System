@@ -1,0 +1,650 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Account - Smart Land Registry System{% endblock %}
+
+{% block content %}
+<style>
+/* Clean Government Blue & White Styling */
+.gov-auth-container {
+    max-width: 900px;
+    margin: 1.5rem auto 3rem auto;
+    font-family: 'Outfit', 'Inter', sans-serif;
+}
+
+.role-nav-tabs {
+    display: flex;
+    background: #e2e8f0;
+    border-radius: 12px 12px 0 0;
+    padding: 6px 6px 0 6px;
+    gap: 4px;
+    border: 1px solid #cbd5e1;
+    border-bottom: none;
+}
+
+.role-nav-tab {
+    flex: 1;
+    text-align: center;
+    padding: 0.85rem 1rem;
+    font-weight: 600;
+    font-size: 0.92rem;
+    color: #475569;
+    background: #cbd5e1;
+    border: none;
+    border-radius: 8px 8px 0 0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.role-nav-tab:hover {
+    background: #94a3b8;
+    color: #0f172a;
+}
+
+.role-nav-tab.active {
+    background: #ffffff;
+    color: #1e3a8a;
+    font-weight: 700;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+}
+
+.role-tab-content {
+    display: none;
+}
+
+.role-tab-content.active {
+    display: block;
+}
+
+.gov-card {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 0 0 16px 16px;
+    box-shadow: 0 15px 35px rgba(30, 58, 138, 0.08);
+    overflow: hidden;
+}
+
+.gov-header-banner {
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #2563eb 100%);
+    color: #ffffff;
+    padding: 2rem 2.5rem;
+    position: relative;
+    border-bottom: 4px solid #f59e0b;
+}
+
+.gov-emblem-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    margin-bottom: 0.75rem;
+}
+
+.gov-emblem-icon {
+    width: 58px;
+    height: 58px;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.gov-dept-tag {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #93c5fd;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.gov-page-title {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: #ffffff;
+    line-height: 1.2;
+    margin: 0;
+    font-family: 'Outfit', sans-serif;
+}
+
+.gov-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(245, 158, 11, 0.2);
+    border: 1px solid #f59e0b;
+    color: #fef08a;
+    padding: 0.35rem 0.85rem;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    margin-top: 0.75rem;
+}
+
+.gov-banner-desc {
+    color: #e2e8f0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-top: 0.75rem;
+    background: rgba(255, 255, 255, 0.08);
+    padding: 0.65rem 1rem;
+    border-radius: 8px;
+    border-left: 3.5px solid #60a5fa;
+}
+
+.gov-form-body {
+    padding: 2.25rem;
+    background: #ffffff;
+}
+
+.gov-section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding-bottom: 0.6rem;
+    margin-bottom: 1.25rem;
+    border-bottom: 2px solid #eff6ff;
+    color: #1e3a8a;
+}
+
+.gov-section-header i {
+    font-size: 1.1rem;
+    color: #2563eb;
+}
+
+.gov-section-header h3 {
+    font-size: 1.02rem;
+    font-weight: 700;
+    color: #1e3a8a;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.gov-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+    margin-bottom: 1.75rem;
+}
+
+.gov-grid-full {
+    grid-column: span 2;
+}
+
+@media (max-width: 768px) {
+    .gov-grid {
+        grid-template-columns: 1fr;
+    }
+    .gov-grid-full {
+        grid-column: span 1;
+    }
+}
+
+.gov-field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.gov-field-label {
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #334155;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.gov-field-label span.req {
+    color: #ef4444;
+}
+
+.gov-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.gov-input-icon {
+    position: absolute;
+    left: 14px;
+    color: #64748b;
+    font-size: 1rem;
+    pointer-events: none;
+    transition: color 0.2s;
+}
+
+.gov-input-field {
+    width: 100%;
+    padding: 0.7rem 0.85rem 0.7rem 2.6rem;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 0.92rem;
+    color: #0f172a;
+    background: #f8fafc;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+.gov-input-field:focus {
+    outline: none;
+    border-color: #2563eb;
+    background: #ffffff;
+    box-shadow: 0 0 0 3.5px rgba(37, 99, 235, 0.15);
+}
+
+.gov-input-field[readonly] {
+    background: #f1f5f9;
+    color: #475569;
+    cursor: not-allowed;
+    border-color: #e2e8f0;
+    font-weight: 600;
+}
+
+.btn-gov-primary {
+    width: 100%;
+    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+    color: #ffffff;
+    border: none;
+    padding: 0.85rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 1.05rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+    transition: all 0.2s ease;
+}
+
+.btn-gov-primary:hover {
+    background: linear-gradient(135deg, #172554 0%, #1d4ed8 100%);
+    box-shadow: 0 6px 18px rgba(37, 99, 235, 0.35);
+    transform: translateY(-1px);
+}
+</style>
+
+<div class="gov-auth-container">
+    
+    <!-- Navigation Tabs (Ordered: 1. Citizen, 2. Revenue Officer, 3. Administrator) -->
+    <div class="role-nav-tabs">
+        <button type="button" class="role-nav-tab active" id="tab-btn-citizen" onclick="switchTab('citizen')">
+            <i class="fa-solid fa-user"></i> Citizen Registration
+        </button>
+        <button type="button" class="role-nav-tab" id="tab-btn-registrar" onclick="switchTab('registrar')">
+            <i class="fa-solid fa-building-columns"></i> Revenue Officer Registration
+        </button>
+        <button type="button" class="role-nav-tab" id="tab-btn-admin" onclick="switchTab('admin')">
+            <i class="fa-solid fa-user-shield"></i> Administrator Registration
+        </button>
+    </div>
+
+    <!-- TAB 1: CITIZEN REGISTRATION -->
+    <div id="tab-content-citizen" class="role-tab-content active">
+        <div class="gov-card" style="padding: 2.5rem; border-radius: 0 0 16px 16px;">
+            <div class="auth-header" style="text-align: center; margin-bottom: 2rem;">
+                <div class="auth-logo" style="font-size: 2rem; font-weight: 800; color: #1e3a8a; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-family: 'Outfit', sans-serif;">
+                    <i class="fa-solid fa-landmark-flag" style="color: #2563eb;"></i> E-Registry
+                </div>
+            </div>
+            
+            <form action="{{ url_for('auth.register') }}" method="POST">
+                <input type="hidden" name="role" value="citizen">
+                <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                    <div class="form-element" style="grid-column: span 2;">
+                        <label for="username_cit" style="font-weight: 600; color: #475569; font-size: 0.85rem;">Username</label>
+                        <input type="text" id="username_cit" name="username" class="gov-input" required style="width: 100%; margin: 0; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+                    </div>
+                    
+                    <div class="form-element" style="grid-column: span 2;">
+                        <label for="email_cit" style="font-weight: 600; color: #475569; font-size: 0.85rem;">Email Address</label>
+                        <input type="email" id="email_cit" name="email" class="gov-input" required style="width: 100%; margin: 0; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+                    </div>
+                    
+                    <div class="form-element" style="grid-column: span 2;">
+                        <label for="password_cit" style="font-weight: 600; color: #475569; font-size: 0.85rem;">Password</label>
+                        <input type="password" id="password_cit" name="password" class="gov-input" required style="width: 100%; margin: 0; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+                    </div>
+                    
+                    <div class="form-element">
+                        <label for="age_cit" style="font-weight: 600; color: #475569; font-size: 0.85rem;">Age</label>
+                        <input type="number" id="age_cit" name="age" class="gov-input" required style="width: 100%; margin: 0; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+                    </div>
+                    
+                    <div class="form-element">
+                        <label for="city_cit" style="font-weight: 600; color: #475569; font-size: 0.85rem;">City</label>
+                        <input type="text" id="city_cit" name="city" class="gov-input" required style="width: 100%; margin: 0; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+                    </div>
+                    
+                    <div class="form-element">
+                        <label for="state_cit" style="font-weight: 600; color: #475569; font-size: 0.85rem;">State</label>
+                        <input type="text" id="state_cit" name="state" class="gov-input" value="Maharashtra" required style="width: 100%; margin: 0; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+                    </div>
+                    
+                    <div class="form-element">
+                        <label for="aadhar_cit" style="font-weight: 600; color: #475569; font-size: 0.85rem;">Aadhar Number</label>
+                        <input type="text" id="aadhar_cit" name="aadhar" class="gov-input mono" required style="width: 100%; margin: 0; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+                    </div>
+                    
+                    <div class="form-element" style="grid-column: span 2;">
+                        <label for="pan_cit" style="font-weight: 600; color: #475569; font-size: 0.85rem;">PAN Number</label>
+                        <input type="text" id="pan_cit" name="pan" class="gov-input mono" required style="width: 100%; margin: 0; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn-gov-primary" style="width: 100%;">
+                    Register Citizen Profile
+                </button>
+            </form>
+            
+            <p style="text-align: center; margin-top: 1.5rem; font-size: 0.88rem; color: #475569;">
+                Already have an account? <a href="{{ url_for('auth.login') }}" style="color: #2563eb; font-weight: 600; text-decoration: none;">Sign In</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- TAB 2: REVENUE OFFICER REGISTRATION -->
+    <div id="tab-content-registrar" class="role-tab-content">
+        <div class="gov-card">
+            
+            <!-- Government Header Banner -->
+            <div class="gov-header-banner" style="padding: 1.5rem 2.25rem;">
+                <div class="gov-emblem-wrapper" style="margin-bottom: 0;">
+                    <div class="gov-emblem-icon">
+                        <i class="fa-solid fa-landmark-flag"></i>
+                    </div>
+                    <div>
+                        <div class="gov-dept-tag">DEPARTMENT OF REVENUE & LAND RECORDS</div>
+                        <h1 class="gov-page-title">Revenue Officer Registration</h1>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Registration Form -->
+            <form id="officerRegisterForm" action="{{ url_for('auth.register') }}" method="POST" enctype="multipart/form-data" class="gov-form-body">
+                <input type="hidden" name="role" value="registrar">
+
+                <!-- SECTION 1: OFFICER CREDENTIALS & PERSONAL INFO -->
+                <div class="gov-section-header">
+                    <i class="fa-solid fa-id-badge"></i>
+                    <h3>1. Officer Credentials & Personal Info</h3>
+                </div>
+
+                <div class="gov-grid">
+                    <!-- 1. Full Name -->
+                    <div class="gov-field-group">
+                        <label class="gov-field-label" for="full_name">
+                            Full Name <span class="req">*</span>
+                        </label>
+                        <div class="gov-input-wrapper">
+                            <input type="text" id="full_name" name="full_name" class="gov-input-field" required>
+                            <i class="fa-solid fa-user-tie gov-input-icon"></i>
+                        </div>
+                    </div>
+
+                    <!-- 2. Official Email ID -->
+                    <div class="gov-field-group">
+                        <label class="gov-field-label" for="official_email">
+                            Official Email ID <span class="req">*</span>
+                        </label>
+                        <div class="gov-input-wrapper">
+                            <input type="email" id="official_email" name="official_email" class="gov-input-field" required>
+                            <i class="fa-solid fa-envelope gov-input-icon"></i>
+                        </div>
+                    </div>
+
+                    <!-- 3. Mobile Number -->
+                    <div class="gov-field-group">
+                        <label class="gov-field-label" for="mobile_number">
+                            Mobile Number <span class="req">*</span>
+                        </label>
+                        <div class="gov-input-wrapper">
+                            <input type="tel" id="mobile_number" name="mobile_number" class="gov-input-field mono" maxlength="10" pattern="[0-9]{10}" required>
+                            <i class="fa-solid fa-phone gov-input-icon"></i>
+                        </div>
+                    </div>
+
+                    <!-- 4. Employee / Officer ID -->
+                    <div class="gov-field-group">
+                        <label class="gov-field-label" for="officer_id">
+                            Employee / Officer ID <span class="req">*</span>
+                        </label>
+                        <div class="gov-input-wrapper">
+                            <input type="text" id="officer_id" name="officer_id" class="gov-input-field mono" required>
+                            <i class="fa-solid fa-barcode gov-input-icon"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 2: DEPARTMENT & OFFICE POSTING -->
+                <div class="gov-section-header">
+                    <i class="fa-solid fa-building-flag"></i>
+                    <h3>2. Department & Office Posting</h3>
+                </div>
+
+                <div class="gov-grid">
+                    <!-- 5. Department -->
+                    <div class="gov-field-group">
+                        <label class="gov-field-label" for="department">
+                            Department <span class="req">*</span>
+                        </label>
+                        <div class="gov-input-wrapper">
+                            <input type="text" id="department" name="department" class="gov-input-field" value="Department of Revenue & Land Records" readonly>
+                            <i class="fa-solid fa-building-columns gov-input-icon"></i>
+                        </div>
+                    </div>
+
+                    <!-- 6. Designation Dropdown -->
+                    <div class="gov-field-group">
+                        <label class="gov-field-label" for="designation">
+                            Designation <span class="req">*</span>
+                        </label>
+                        <div class="gov-input-wrapper">
+                            <select id="designation" name="designation" class="gov-input-field" required style="padding-left: 2.6rem;">
+                                <option value="" disabled selected>Select Designation</option>
+                                <option value="Revenue Officer">Revenue Officer</option>
+                                <option value="Revenue Inspector">Revenue Inspector</option>
+                                <option value="Sub-Registrar">Sub-Registrar</option>
+                            </select>
+                            <i class="fa-solid fa-user-gear gov-input-icon"></i>
+                        </div>
+                    </div>
+
+                    <!-- 7. District -->
+                    <div class="gov-field-group">
+                        <label class="gov-field-label" for="district">
+                            District <span class="req">*</span>
+                        </label>
+                        <div class="gov-input-wrapper">
+                            <input type="text" id="district" name="district" class="gov-input-field" required>
+                            <i class="fa-solid fa-map-location-dot gov-input-icon"></i>
+                        </div>
+                    </div>
+
+                    <!-- 8. Taluk -->
+                    <div class="gov-field-group">
+                        <label class="gov-field-label" for="taluk">
+                            Taluk <span class="req">*</span>
+                        </label>
+                        <div class="gov-input-wrapper">
+                            <input type="text" id="taluk" name="taluk" class="gov-input-field" required>
+                            <i class="fa-solid fa-location-crosshairs gov-input-icon"></i>
+                        </div>
+                    </div>
+
+                    <!-- 9. Office Name -->
+                    <div class="gov-field-group">
+                        <label class="gov-field-label" for="office_name">
+                            Office Name <span class="req">*</span>
+                        </label>
+                        <div class="gov-input-wrapper">
+                            <input type="text" id="office_name" name="office_name" class="gov-input-field" required>
+                            <i class="fa-solid fa-building gov-input-icon"></i>
+                        </div>
+                    </div>
+
+                    <!-- 10. Office Address -->
+                    <div class="gov-field-group">
+                        <label class="gov-field-label" for="office_address">
+                            Office Address <span class="req">*</span>
+                        </label>
+                        <div class="gov-input-wrapper">
+                            <input type="text" id="office_address" name="office_address" class="gov-input-field" required>
+                            <i class="fa-solid fa-map-pin gov-input-icon"></i>
+                        </div>
+                    </div>
+
+                    <!-- 11. Date of Joining -->
+                    <div class="gov-field-group gov-grid-full">
+                        <label class="gov-field-label" for="date_of_joining">
+                            Date of Joining <span class="req">*</span>
+                        </label>
+                        <div class="gov-input-wrapper">
+                            <input type="date" id="date_of_joining" name="date_of_joining" class="gov-input-field" required>
+                            <i class="fa-solid fa-calendar-check gov-input-icon"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 3: SECURITY & OFFICIAL ID UPLOAD -->
+                <div class="gov-section-header">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <h3>3. Security & Official ID Upload</h3>
+                </div>
+
+                <div class="gov-grid">
+                    <!-- 12. Password -->
+                    <div class="gov-field-group">
+                        <label class="gov-field-label" for="password_officer">
+                            Password <span class="req">*</span>
+                        </label>
+                        <div class="gov-input-wrapper">
+                            <input type="password" id="password_officer" name="password" class="gov-input-field" required>
+                            <i class="fa-solid fa-lock gov-input-icon"></i>
+                        </div>
+                    </div>
+
+                    <!-- 13. Confirm Password -->
+                    <div class="gov-field-group">
+                        <label class="gov-field-label" for="confirm_password_officer">
+                            Confirm Password <span class="req">*</span>
+                        </label>
+                        <div class="gov-input-wrapper">
+                            <input type="password" id="confirm_password_officer" name="confirm_password" class="gov-input-field" required>
+                            <i class="fa-solid fa-lock-open gov-input-icon"></i>
+                        </div>
+                    </div>
+
+                    <!-- 14. Official ID / Document Upload -->
+                    <div class="gov-field-group gov-grid-full">
+                        <label class="gov-field-label" for="official_id_doc">
+                            Official ID / Verification Document Upload <span class="req">*</span>
+                        </label>
+                        <div class="gov-input-wrapper">
+                            <input type="file" id="official_id_doc" name="official_id_doc" class="gov-input-field" accept=".pdf,.jpg,.jpeg,.png" required style="padding: 0.6rem 0.85rem 0.6rem 2.6rem;">
+                            <i class="fa-solid fa-file-pdf gov-input-icon"></i>
+                        </div>
+                        <span style="font-size: 0.78rem; color: #64748b; margin-top: 0.2rem;">Accepted formats: PDF, JPG, PNG (Max size: 5MB)</span>
+                    </div>
+                </div>
+
+                <div id="passMatchFeedback" style="font-size: 0.85rem; font-weight: 700; margin-bottom: 1rem;"></div>
+
+                <!-- 15. Declaration Checkbox -->
+                <div style="margin-bottom: 1.5rem; background: #f8fafc; border: 1px solid #cbd5e1; padding: 1rem; border-radius: 8px; display: flex; align-items: flex-start; gap: 0.75rem;">
+                    <input type="checkbox" id="declaration" name="declaration" required style="width: 18px; height: 18px; margin-top: 3px; cursor: pointer;">
+                    <label for="declaration" style="font-size: 0.88rem; color: #334155; font-weight: 600; cursor: pointer; line-height: 1.4;">
+                        I confirm that the information provided is accurate and I am an authorized Revenue Officer.
+                    </label>
+                </div>
+
+                <!-- Primary Button -->
+                <button type="submit" class="btn-gov-primary">
+                    <i class="fa-solid fa-paper-plane"></i> Submit for Verification
+                </button>
+
+                <p style="text-align: center; margin-top: 1.5rem; font-size: 0.9rem; color: #475569;">
+                    Already registered? <a href="{{ url_for('auth.login') }}" style="color: #2563eb; font-weight: 700; text-decoration: none;">Sign In</a>
+                </p>
+            </form>
+        </div>
+    </div>
+
+    <!-- TAB 3: ADMINISTRATOR REGISTRATION -->
+    <div id="tab-content-admin" class="role-tab-content">
+        <div class="gov-card" style="padding: 2.5rem; border-radius: 0 0 16px 16px;">
+            <div class="auth-header" style="text-align: center; margin-bottom: 2rem;">
+                <div class="auth-logo" style="font-size: 2rem; font-weight: 800; color: #1e3a8a; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-family: 'Outfit', sans-serif;">
+                    <i class="fa-solid fa-user-shield" style="color: #2563eb;"></i> Administrator Registration
+                </div>
+            </div>
+            
+            <form action="{{ url_for('auth.register') }}" method="POST">
+                <input type="hidden" name="role" value="admin">
+                <div class="form-grid" style="display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                    <div class="form-element">
+                        <label for="username_adm" style="font-weight: 600; color: #475569; font-size: 0.85rem;">Admin Username</label>
+                        <input type="text" id="username_adm" name="username" class="gov-input" required style="width: 100%; margin: 0; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+                    </div>
+                    
+                    <div class="form-element">
+                        <label for="email_adm" style="font-weight: 600; color: #475569; font-size: 0.85rem;">Admin Email Address</label>
+                        <input type="email" id="email_adm" name="email" class="gov-input" required style="width: 100%; margin: 0; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+                    </div>
+                    
+                    <div class="form-element">
+                        <label for="password_adm" style="font-weight: 600; color: #475569; font-size: 0.85rem;">Admin Password</label>
+                        <input type="password" id="password_adm" name="password" class="gov-input" required style="width: 100%; margin: 0; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn-gov-primary" style="width: 100%; background: #1e3a8a;">
+                    Register Administrator Account
+                </button>
+            </form>
+            
+            <p style="text-align: center; margin-top: 1.5rem; font-size: 0.88rem; color: #475569;">
+                Already have an account? <a href="{{ url_for('auth.login') }}" style="color: #2563eb; font-weight: 600; text-decoration: none;">Sign In</a>
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+function switchTab(role) {
+    document.querySelectorAll('.role-tab-content').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.role-nav-tab').forEach(el => el.classList.remove('active'));
+    const targetContent = document.getElementById('tab-content-' + role);
+    const targetBtn = document.getElementById('tab-btn-' + role);
+    if (targetContent) targetContent.style.display = 'block';
+    if (targetBtn) targetBtn.classList.add('active');
+}
+
+// Client-side Password Match Check for Officer Registration
+document.getElementById('officerRegisterForm').addEventListener('submit', function(e) {
+    const p1 = document.getElementById('password_officer').value;
+    const p2 = document.getElementById('confirm_password_officer').value;
+    const feedback = document.getElementById('passMatchFeedback');
+    
+    if (p1 && p2 && p1 !== p2) {
+        e.preventDefault();
+        feedback.textContent = "Password and Confirm Password do not match!";
+        feedback.style.color = "#dc2626";
+        return false;
+    } else {
+        feedback.textContent = "";
+    }
+});
+</script>
+{% endblock %}

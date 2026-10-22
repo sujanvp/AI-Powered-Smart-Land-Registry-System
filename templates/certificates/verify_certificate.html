@@ -1,0 +1,198 @@
+{% extends 'base.html' %}
+
+{% block title %}Certificate Verification - Smart Land Registry{% endblock %}
+
+{% block content %}
+<style>
+    .verify-card {
+        max-width: 850px;
+        margin: 2rem auto;
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+        border: 1px solid #e2e8f0;
+        overflow: hidden;
+        font-family: 'Inter', sans-serif;
+    }
+
+    .verify-header-valid {
+        background: linear-gradient(135deg, #065f46 0%, #047857 100%);
+        color: #ffffff;
+        padding: 2.5rem 2rem;
+        text-align: center;
+    }
+
+    .verify-header-invalid {
+        background: linear-gradient(135deg, #991b1b 0%, #dc2626 100%);
+        color: #ffffff;
+        padding: 2.5rem 2rem;
+        text-align: center;
+    }
+
+    .verify-body {
+        padding: 2.5rem;
+    }
+
+    .verify-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.25rem 2rem;
+        margin-top: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .verify-item {
+        border-bottom: 1px solid #f1f5f9;
+        padding-bottom: 0.6rem;
+    }
+
+    .verify-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.25rem;
+    }
+
+    .verify-val {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    .seal-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: #ecfdf5;
+        border: 1px solid #a7f3d0;
+        color: #047857;
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        margin-top: 1rem;
+    }
+</style>
+
+<div class="verify-card">
+    {% if is_valid %}
+    <div class="verify-header-valid">
+        <div style="font-size: 3.5rem; margin-bottom: 0.5rem;">
+            <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <h1 style="font-size: 1.75rem; font-weight: 800; margin: 0; text-transform: uppercase; letter-spacing: 1px;">
+            Officially Verified & Valid Certificate
+        </h1>
+        <p style="font-size: 0.95rem; opacity: 0.9; margin-top: 0.5rem;">
+            Department of Revenue & Land Records • Official Digital Record
+        </p>
+        <div class="seal-badge">
+            <i class="fa-solid fa-shield-halved"></i> Genuine Database Record • Reference: {{ cert_ref }}
+        </div>
+    </div>
+
+    <div class="verify-body">
+        <div style="background: #f8fafc; border-left: 4px solid #047857; padding: 1rem 1.25rem; border-radius: 4px; font-size: 0.85rem; color: #334155; line-height: 1.5;">
+            <strong>Verification Result:</strong> This digital certificate has been cross-referenced with the State Land Registry MySQL Database. All ownership credentials, survey parameters, and title deeds are authentic and officially recorded.
+        </div>
+
+        <div class="verify-grid">
+            <div class="verify-item">
+                <div class="verify-label">Certificate Reference</div>
+                <div class="verify-val" style="color: #047857; font-family: monospace;">{{ cert_ref }}</div>
+            </div>
+
+            <div class="verify-item">
+                <div class="verify-label">Survey Number</div>
+                <div class="verify-val" style="color: #1e3a8a; font-family: monospace;">{{ land.survey_number }}</div>
+            </div>
+
+            <div class="verify-item">
+                <div class="verify-label">Property PID</div>
+                <div class="verify-val" style="font-family: monospace;">{{ pid }}</div>
+            </div>
+
+            <div class="verify-item">
+                <div class="verify-label">Registered Owner</div>
+                <div class="verify-val">{{ owner_name }}</div>
+            </div>
+
+            <div class="verify-item">
+                <div class="verify-label">Owner Citizen ID</div>
+                <div class="verify-val">{{ owner_citizen_id }}</div>
+            </div>
+
+            <div class="verify-item">
+                <div class="verify-label">Registration Date & Time</div>
+                <div class="verify-val" style="color: #475569;">{{ registration_date }}</div>
+            </div>
+
+            <div class="verify-item">
+                <div class="verify-label">State</div>
+                <div class="verify-val">{{ state }}</div>
+            </div>
+
+            <div class="verify-item">
+                <div class="verify-label">District</div>
+                <div class="verify-val">{{ district }}</div>
+            </div>
+
+            <div class="verify-item">
+                <div class="verify-label">Taluk</div>
+                <div class="verify-val">{{ taluk }}</div>
+            </div>
+
+            <div class="verify-item">
+                <div class="verify-label">Village / Locality</div>
+                <div class="verify-val">{{ village }}</div>
+            </div>
+
+            <div class="verify-item">
+                <div class="verify-label">Total Surveyed Area</div>
+                <div class="verify-val">{{ area_formatted }}</div>
+            </div>
+
+            <div class="verify-item">
+                <div class="verify-label">Land Classification Type</div>
+                <div class="verify-val">{{ land_type }}</div>
+            </div>
+
+            <div class="verify-item" style="grid-column: span 2;">
+                <div class="verify-label">Declared Market Value</div>
+                <div class="verify-val" style="color: #059669; font-size: 1.2rem;">{{ declared_value_formatted }}</div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 2rem; padding-top: 1rem; border-top: 1px dashed #cbd5e1;">
+            <a href="{{ url_for('land.view_land_certificate', land_id=land.id) }}" class="btn-action-primary" style="text-decoration: none; padding: 0.6rem 1.5rem;">
+                <i class="fa-solid fa-file-contract"></i> View Official Certificate Page
+            </a>
+        </div>
+    </div>
+    {% else %}
+    <div class="verify-header-invalid">
+        <div style="font-size: 3.5rem; margin-bottom: 0.5rem;">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <h1 style="font-size: 1.75rem; font-weight: 800; margin: 0; text-transform: uppercase; letter-spacing: 1px;">
+            Unverified Certificate Reference
+        </h1>
+        <p style="font-size: 0.95rem; opacity: 0.9; margin-top: 0.5rem;">
+            Reference ID: {{ cert_ref }}
+        </p>
+    </div>
+
+    <div class="verify-body" style="text-align: center; padding: 3rem 2rem;">
+        <p style="font-size: 1.05rem; color: #475569; max-width: 550px; margin: 0 auto 2rem auto; line-height: 1.6;">
+            {{ message }}
+        </p>
+
+        <a href="{{ url_for('land.dashboard') }}" class="btn-action-secondary" style="text-decoration: none;">
+            <i class="fa-solid fa-house"></i> Return to Registry Dashboard
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
